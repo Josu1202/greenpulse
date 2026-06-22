@@ -19,8 +19,6 @@ interface EnvironmentalMapProps {
   categories: Category[];
 }
 
-// Marcador como punto de color (divIcon) para evitar el problema clásico
-// de los íconos de Leaflet rotos por el bundler, y para colorear por categoría.
 function createPinIcon(color: string) {
   return L.divIcon({
     className: "greenpulse-pin",
@@ -76,10 +74,10 @@ export default function EnvironmentalMap({
               </p>
 
               <Link
-                href={`/reports/new?id=${report.id}`}
+                href="/reports"
                 className="text-xs font-medium text-green-700 hover:underline"
               >
-                Ver / editar reporte →
+                Ver historial en reportes →
               </Link>
             </div>
           </Popup>
