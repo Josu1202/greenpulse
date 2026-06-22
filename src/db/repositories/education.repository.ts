@@ -7,6 +7,7 @@ export interface CreateEducationLessonInput {
   summary: string;
   content: string;
   image?: string;
+  referenceImages?: string[];
   estimatedMinutes: number;
   createdByUserId: string;
   createdByUserName: string;
@@ -66,6 +67,7 @@ export async function createEducationLesson(
     summary: input.summary.trim(),
     content: input.content.trim(),
     image: input.image,
+    referenceImages: input.referenceImages,
     estimatedMinutes: input.estimatedMinutes,
     source: "user",
     createdByUserId: input.createdByUserId,
@@ -73,7 +75,7 @@ export async function createEducationLesson(
     questions: input.questions,
     createdAt: now,
     updatedAt: now,
-  };
+};
 
   await db.educationLessons.add(lesson);
 

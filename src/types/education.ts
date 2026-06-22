@@ -19,6 +19,7 @@ export interface EducationLesson {
   summary: string;
   content: string;
   image?: string;
+  referenceImages?: string[];
   estimatedMinutes: number;
   source: EducationLessonSource;
   createdByUserId?: string;

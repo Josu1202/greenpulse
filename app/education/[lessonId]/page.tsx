@@ -161,7 +161,23 @@ export default function EducationLessonDetailPage() {
                             </p>
                           ))}
                       </div>
-
+                      {lesson.referenceImages && lesson.referenceImages.length > 0 ? (
+                      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                        {lesson.referenceImages.map((image, index) => (
+                          <div
+                            key={`${image}-${index}`}
+                            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                          >
+                            <div
+                              className="h-56 bg-cover bg-center"
+                              style={{
+                                backgroundImage: `url(${image})`,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                       <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
                         El asistente educativo está disponible mientras lees,
                         pero se ocultará cuando inicies la evaluación.
