@@ -5,3 +5,4 @@ export * from "./ReportActivity";
 export * from "./status";
 export * from "./settings";
 export * from "./education";
+export * from "./recognition";
