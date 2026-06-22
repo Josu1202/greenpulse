@@ -19,6 +19,7 @@ const publicNavItems = [
   { label: "Reportes", href: "/reports" },
   { label: "Mapa", href: "/map" },
   { label: "Educación", href: "/education" },
+  { label: "Reconocimiento", href: "/recognition" },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {
