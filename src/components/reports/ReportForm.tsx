@@ -7,6 +7,8 @@ import { Button, Input, Select, Textarea } from "@/components/ui";
 import type { Category, Report } from "@/types";
 import { reportSchema, type ReportFormData } from "@/schemas/report.schema";
 import { REPORT_PRIORITIES, REPORT_STATUSES } from "@/utils/constants";
+import { fileToDataUrl } from "@/utils/image";
+import { LocationPicker } from "./LocationPicker";
 
 interface ReportFormProps {
   categories: Category[];
@@ -47,26 +49,44 @@ export function ReportForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReadingImage, setIsReadingImage] = useState(false);
 
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) {
-      setImage(undefined);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImage(typeof reader.result === "string" ? reader.result : undefined);
-    };
-    reader.readAsDataURL(file);
+    try {
+      setFormError(null);
+      setIsReadingImage(true);
+
+      const imageDataUrl = await fileToDataUrl(file);
+      setImage(imageDataUrl);
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo procesar la imagen."
+      );
+    } finally {
+      setIsReadingImage(false);
+    }
+  };
+
+  const handleLocationChange = (nextLatitude: string, nextLongitude: string) => {
+    setLatitude(nextLatitude);
+    setLongitude(nextLongitude);
+  };
+
+  const handleRemoveImage = () => {
+    setImage(undefined);
   };
 
   const handleSubmit = async () => {
     setFormError(null);
 
-    // Validación con Zod antes de persistir
     const result = reportSchema.safeParse({
       title,
       description,
@@ -83,6 +103,7 @@ export function ReportForm({
 
       for (const issue of result.error.issues) {
         const key = issue.path[0];
+
         if (typeof key === "string" && !fieldErrors[key]) {
           fieldErrors[key] = issue.message;
         }
@@ -115,7 +136,7 @@ export function ReportForm({
           label="Título *"
           name="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(event) => setTitle(event.target.value)}
           error={errors.title}
           placeholder="Ej. Acumulación de basura en área verde"
         />
@@ -124,7 +145,7 @@ export function ReportForm({
           label="Categoría *"
           name="categoryId"
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          onChange={(event) => setCategoryId(event.target.value)}
           error={errors.categoryId}
         >
           <option value="">Selecciona una categoría</option>
@@ -141,7 +162,7 @@ export function ReportForm({
         name="description"
         rows={4}
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        onChange={(event) => setDescription(event.target.value)}
         error={errors.description}
         placeholder="Describe la situación, el lugar exacto y los detalles relevantes."
       />
@@ -151,7 +172,7 @@ export function ReportForm({
           label="Prioridad *"
           name="priority"
           value={priority}
-          onChange={(e) => setPriority(e.target.value)}
+          onChange={(event) => setPriority(event.target.value)}
           error={errors.priority}
         >
           <option value="">Selecciona prioridad</option>
@@ -166,7 +187,7 @@ export function ReportForm({
           label="Estado"
           name="status"
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(event) => setStatus(event.target.value)}
           error={errors.status}
         >
           {REPORT_STATUSES.map((item) => (
@@ -177,47 +198,44 @@ export function ReportForm({
         </Select>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Input
-          label="Latitud *"
-          name="latitude"
-          type="number"
-          step="any"
-          value={latitude}
-          onChange={(e) => setLatitude(e.target.value)}
-          error={errors.latitude}
-          placeholder="Ej. 13.4833"
-        />
-
-        <Input
-          label="Longitud *"
-          name="longitude"
-          type="number"
-          step="any"
-          value={longitude}
-          onChange={(e) => setLongitude(e.target.value)}
-          error={errors.longitude}
-          placeholder="Ej. -88.1833"
-        />
-      </div>
+      <LocationPicker
+        latitude={latitude}
+        longitude={longitude}
+        onChange={handleLocationChange}
+        latitudeError={errors.latitude}
+        longitudeError={errors.longitude}
+      />
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-slate-700">
-          Imagen (opcional)
+          Imagen principal del reporte (opcional)
         </label>
+
         <input
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg,image/webp"
           onChange={handleImageChange}
+          disabled={isReadingImage}
           className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-green-700 hover:file:bg-green-100"
         />
+
+        {isReadingImage ? (
+          <p className="text-xs text-slate-500">Procesando imagen...</p>
+        ) : null}
+
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image}
-            alt="Vista previa del reporte"
-            className="mt-2 h-28 w-28 rounded-lg object-cover border border-slate-200"
-          />
+          <div className="mt-2 flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={image}
+              alt="Vista previa del reporte"
+              className="h-28 w-28 rounded-lg border border-slate-200 object-cover"
+            />
+
+            <Button variant="outline" size="sm" onClick={handleRemoveImage}>
+              Quitar imagen
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -241,7 +259,7 @@ export function ReportForm({
         <Button
           variant="primary"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isReadingImage}
         >
           {isSubmitting ? "Guardando..." : submitLabel}
         </Button>

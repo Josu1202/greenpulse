@@ -325,17 +325,25 @@ export async function deleteUser(id: string): Promise<void> {
     throw new Error("El usuario no existe.");
   }
 
-  await db.transaction("rw", db.users, db.reports, db.statusLogs, async () => {
-    const userReports = await db.reports.where("userId").equals(id).toArray();
-    const reportIds = userReports.map((report) => report.id);
+  await db.transaction(
+    "rw",
+    db.users,
+    db.reports,
+    db.statusLogs,
+    db.reportActivities,
+    async () => {
+      const userReports = await db.reports.where("userId").equals(id).toArray();
+      const reportIds = userReports.map((report) => report.id);
 
-    if (reportIds.length > 0) {
-      await db.statusLogs.where("reportId").anyOf(reportIds).delete();
-      await db.reports.where("userId").equals(id).delete();
+      if (reportIds.length > 0) {
+        await db.statusLogs.where("reportId").anyOf(reportIds).delete();
+        await db.reportActivities.where("reportId").anyOf(reportIds).delete();
+        await db.reports.where("userId").equals(id).delete();
+      }
+
+      await db.users.delete(id);
     }
-
-    await db.users.delete(id);
-  });
+  );
 }
 
 export async function clearUsers(): Promise<void> {
