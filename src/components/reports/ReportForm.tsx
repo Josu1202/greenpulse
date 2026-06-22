@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { ChangeEvent } from "react";
 
 import { Button, Input, Select, Textarea } from "@/components/ui";
-import type { Category, Report } from "@/types";
+import type { Category, Report, ReportPriority, ReportStatus } from "@/types";
 import { reportSchema, type ReportFormData } from "@/schemas/report.schema";
 import { REPORT_PRIORITIES, REPORT_STATUSES } from "@/utils/constants";
 import { fileToDataUrl } from "@/utils/image";
@@ -13,6 +13,7 @@ import { LocationPicker } from "./LocationPicker";
 interface ReportFormProps {
   categories: Category[];
   initialReport?: Report;
+  initialData?: Partial<ReportFormData>;
   submitLabel?: string;
   onSubmit: (data: ReportFormData) => Promise<void>;
   onCancel?: () => void;
@@ -21,30 +22,40 @@ interface ReportFormProps {
 export function ReportForm({
   categories,
   initialReport,
+  initialData,
   submitLabel = "Guardar reporte",
   onSubmit,
   onCancel,
 }: ReportFormProps) {
-  const [title, setTitle] = useState(initialReport?.title ?? "");
+  const [title, setTitle] = useState(
+    initialReport?.title ?? initialData?.title ?? ""
+  );
+
   const [description, setDescription] = useState(
-    initialReport?.description ?? ""
+    initialReport?.description ?? initialData?.description ?? ""
   );
+
   const [categoryId, setCategoryId] = useState(
-    initialReport?.categoryId ?? ""
+    initialReport?.categoryId ?? initialData?.categoryId ?? ""
   );
-  const [priority, setPriority] = useState<string>(
-    initialReport?.priority ?? ""
+
+  const [priority, setPriority] = useState<ReportPriority | "">(
+    initialReport?.priority ?? initialData?.priority ?? ""
   );
-  const [status, setStatus] = useState<string>(
-    initialReport?.status ?? "pending"
+
+  const [status, setStatus] = useState<ReportStatus>(
+    initialReport?.status ?? initialData?.status ?? "pending"
   );
+
   const [latitude, setLatitude] = useState(
     initialReport ? String(initialReport.latitude) : ""
   );
+
   const [longitude, setLongitude] = useState(
     initialReport ? String(initialReport.longitude) : ""
   );
-  const [image, setImage] = useState<string | undefined>(initialReport?.image);
+
+  const [image, setImage] = useState(initialReport?.image ?? initialData?.image);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -172,7 +183,9 @@ export function ReportForm({
           label="Prioridad *"
           name="priority"
           value={priority}
-          onChange={(event) => setPriority(event.target.value)}
+          onChange={(event) =>
+            setPriority(event.target.value as ReportPriority | "")
+          }
           error={errors.priority}
         >
           <option value="">Selecciona prioridad</option>
@@ -187,7 +200,7 @@ export function ReportForm({
           label="Estado"
           name="status"
           value={status}
-          onChange={(event) => setStatus(event.target.value)}
+          onChange={(event) => setStatus(event.target.value as ReportStatus)}
           error={errors.status}
         >
           {REPORT_STATUSES.map((item) => (

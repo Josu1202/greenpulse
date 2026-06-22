@@ -1,18 +1,34 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { MainLayout, ProtectedRoute } from "@/components/layout";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { ReportForm } from "@/components/reports";
 import { useCategories, useReports } from "@/hooks";
 import type { ReportFormData } from "@/schemas/report.schema";
+import {
+  clearRecognitionReportDraft,
+  getRecognitionReportDraft,
+  type RecognitionReportDraft,
+} from "@/utils";
 
 function ReportFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reportId = searchParams.get("id");
+
+  const [recognitionDraft, setRecognitionDraft] =
+    useState<RecognitionReportDraft | null>(null);
+  const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
 
   const {
     reports,
@@ -33,6 +49,22 @@ function ReportFormContent() {
   const isOwner = Boolean(
     currentUser && existingReport && existingReport.userId === currentUser.id
   );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (reportId) {
+        setHasLoadedDraft(true);
+        return;
+      }
+
+      setRecognitionDraft(getRecognitionReportDraft());
+      setHasLoadedDraft(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [reportId]);
 
   const handleSubmit = async (data: ReportFormData) => {
     if (isEditing && existingReport) {
@@ -57,6 +89,10 @@ function ReportFormContent() {
         longitude: data.longitude,
         image: data.image,
       });
+
+      if (recognitionDraft) {
+        clearRecognitionReportDraft();
+      }
     }
 
     router.push("/reports");
@@ -66,6 +102,14 @@ function ReportFormContent() {
     return (
       <p className="py-8 text-center text-slate-500">
         Cargando formulario...
+      </p>
+    );
+  }
+
+  if (!hasLoadedDraft) {
+    return (
+      <p className="py-8 text-center text-slate-500">
+        Preparando formulario...
       </p>
     );
   }
@@ -125,6 +169,7 @@ function ReportFormContent() {
         <ReportForm
           categories={categories}
           initialReport={existingReport}
+          initialData={!isEditing ? recognitionDraft ?? undefined : undefined}
           submitLabel={isEditing ? "Guardar cambios" : "Crear reporte"}
           onSubmit={handleSubmit}
           onCancel={() => router.push("/reports")}
