@@ -4,20 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
-  BarChart3,
   FileText,
   LayoutDashboard,
   LogOut,
   MapPin,
   PlusCircle,
-  Settings,
-  Tag,
-  Users,
+  UserCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { APP_NAME } from "@/utils/constants";
 import { cn } from "@/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavItem {
   label: string;
@@ -25,31 +23,30 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-// Navegación de la zona privada. Centralizada aquí para no repetir rutas.
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Reportes", href: "/reports", icon: FileText },
   { label: "Nuevo reporte", href: "/reports/new", icon: PlusCircle },
   { label: "Mapa", href: "/map", icon: MapPin },
-  { label: "Estadísticas", href: "/stats", icon: BarChart3 },
-  { label: "Categorías", href: "/categories", icon: Tag },
-  { label: "Usuarios", href: "/users", icon: Users },
-  { label: "Configuración", href: "/settings", icon: Settings },
+  { label: "Mi perfil", href: "/profile", icon: UserCircle },
 ];
 
 interface SidebarProps {
-  // Permite cerrar el drawer móvil al tocar un enlace.
   onNavigate?: () => void;
 }
 
 export function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
-  // Marca como activa solo la ruta más específica que coincide.
   const activeHref = NAV_ITEMS.filter(
-    (item) =>
-      pathname === item.href || pathname.startsWith(`${item.href}/`)
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
   ).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
+  const handleLogout = () => {
+    logout();
+    onNavigate?.();
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-green-900 text-green-100">
@@ -87,6 +84,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       <div className="border-t border-white/10 p-3">
         <button
           type="button"
+          onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-green-100/80 transition-colors hover:bg-white/10 hover:text-white"
         >
           <LogOut className="h-5 w-5 shrink-0" />

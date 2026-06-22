@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { MainLayout } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import { Card } from "@/components/ui";
 import { MapFilters, MapView } from "@/components/maps";
 import { useCategories, useReports } from "@/hooks";
@@ -10,7 +10,7 @@ import { filterReportsByPriority } from "@/features/reports/reportPresentation";
 import { getReportsWithCoordinates } from "@/features/map/mapHelpers";
 import type { ReportPriority } from "@/types";
 
-export default function MapPage() {
+function MapContent() {
   const {
     filteredReports,
     selectedStatus,
@@ -27,13 +27,8 @@ export default function MapPage() {
     ReportPriority | "all"
   >("all");
 
-  // El hook filtra estado y categoría; aquí se aplica prioridad y se
-  // descartan reportes sin coordenadas válidas, todo con funciones puras.
   const visibleReports = useMemo(() => {
-    const byPriority = filterReportsByPriority(
-      filteredReports,
-      selectedPriority
-    );
+    const byPriority = filterReportsByPriority(filteredReports, selectedPriority);
     return getReportsWithCoordinates(byPriority);
   }, [filteredReports, selectedPriority]);
 
@@ -77,5 +72,13 @@ export default function MapPage() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <ProtectedRoute>
+      <MapContent />
+    </ProtectedRoute>
   );
 }

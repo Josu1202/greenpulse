@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { AuthLayout } from "@/components/layout";
@@ -9,10 +10,15 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, error } = useAuth();
+  const { register, error, isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleRegister = async (values: RegisterFormData) => {
-    // register() crea el usuario en IndexedDB (Persona 2). Aquí solo se conecta.
     await register(values);
     router.push("/dashboard");
   };
