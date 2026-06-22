@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
 import { Camera, KeyRound, Save, UserCircle } from "lucide-react";
-
+import { EducationBadgesPanel } from "@/components/education";
 import { MainLayout, ProtectedRoute } from "@/components/layout";
 import {
   Button,
@@ -181,7 +181,7 @@ function ProfileForm({ user }: ProfileFormProps) {
             </div>
           </CardContent>
         </Card>
-
+        <EducationBadgesPanel />
         <Card>
           <CardHeader>
             <div>
