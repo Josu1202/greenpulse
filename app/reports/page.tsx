@@ -3,14 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { MainLayout } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import { Button } from "@/components/ui";
 import { ReportFilters, ReportTable } from "@/components/reports";
 import { useCategories, useReports } from "@/hooks";
 import { filterReportsByPriority } from "@/features/reports/reportPresentation";
 import type { ReportPriority } from "@/types";
 
-export default function ReportsPage() {
+function ReportsContent() {
   const {
     filteredReports,
     selectedStatus,
@@ -25,8 +25,6 @@ export default function ReportsPage() {
 
   const { categories } = useCategories();
 
-  // El hook ya filtra por estado y categoría.
-  // La prioridad se aplica aquí como función pura sin tocar el hook de Persona 2.
   const [selectedPriority, setSelectedPriority] = useState<
     ReportPriority | "all"
   >("all");
@@ -40,6 +38,7 @@ export default function ReportsPage() {
     const confirmed = window.confirm(
       "¿Eliminar este reporte? Esta acción no se puede deshacer."
     );
+
     if (confirmed) {
       await removeReport(id);
     }
@@ -48,7 +47,6 @@ export default function ReportsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Encabezado */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-950">Reportes</h1>
@@ -61,7 +59,6 @@ export default function ReportsPage() {
           </Link>
         </div>
 
-        {/* Filtros */}
         <ReportFilters
           categories={categories}
           selectedCategoryId={selectedCategoryId}
@@ -72,14 +69,12 @@ export default function ReportsPage() {
           onPriorityChange={setSelectedPriority}
         />
 
-        {/* Error de carga */}
         {error ? (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
             {error}
           </p>
         ) : null}
 
-        {/* Tabla de reportes */}
         {isLoading ? (
           <p className="py-8 text-center text-slate-500">
             Cargando reportes...
@@ -94,5 +89,13 @@ export default function ReportsPage() {
         )}
       </div>
     </MainLayout>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <ProtectedRoute>
+      <ReportsContent />
+    </ProtectedRoute>
   );
 }

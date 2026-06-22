@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { MainLayout } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import {
   CategoryChart,
   KpiCard,
@@ -17,11 +17,10 @@ import {
   reportesPorEstado,
 } from "@/features/dashboard/dashboardStats";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { reports, isLoading, error } = useReports();
   const { categories } = useCategories();
 
-  // Toda la lógica de cálculo vive en features/dashboard; aquí solo se consume.
   const kpis = useMemo(() => calcularKpis(reports), [reports]);
   const porCategoria = useMemo(
     () => reportesPorCategoria(reports, categories),
@@ -52,7 +51,6 @@ export default function DashboardPage() {
           </p>
         ) : (
           <>
-            {/* KPIs */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <KpiCard
                 label="Total de reportes"
@@ -76,17 +74,23 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Gráficas */}
             <div className="grid gap-4 lg:grid-cols-2">
               <CategoryChart data={porCategoria} />
               <StatusChart data={porEstado} />
             </div>
 
-            {/* Actividad reciente */}
             <RecentActivity reports={recientes} categories={categories} />
           </>
         )}
       </div>
     </MainLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

@@ -1,11 +1,25 @@
+"use client";
+
 import { AuthLayout } from "@/components/layout";
-import { ForgotPasswordForm } from "@/features/auth";
+import {
+  ForgotPasswordForm,
+  type ForgotPasswordFormValues,
+} from "@/features/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ForgotPasswordPage() {
-  // Página solo visual. Persona 2 conectará la lógica de restablecimiento
-  // (verificar el correo en IndexedDB) pasando un onSubmit a ForgotPasswordForm.
+  const { resetPasswordByEmail, error } = useAuth();
+
+  const handleResetPassword = async ({
+    email,
+    password,
+  }: ForgotPasswordFormValues) => {
+    await resetPasswordByEmail(email, password);
+  };
+
   return (
     <AuthLayout>
-      <ForgotPasswordForm />
-    </AuthLayout> );
+      <ForgotPasswordForm onSubmit={handleResetPassword} error={error} />
+    </AuthLayout>
+  );
 }

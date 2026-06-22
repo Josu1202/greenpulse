@@ -3,15 +3,11 @@
 import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { MainLayout } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { ReportForm } from "@/components/reports";
 import { useAuth, useCategories, useReports } from "@/hooks";
 import type { ReportFormData } from "@/schemas/report.schema";
-
-// Puente temporal hasta que Persona 1/2 entregue el login completo (feature/auth).
-// Cuando useAuth retorne un user real, se usa user.id automáticamente.
-const DEMO_USER_ID = "demo-user";
 
 function ReportFormContent() {
   const router = useRouter();
@@ -23,13 +19,17 @@ function ReportFormContent() {
   const { user } = useAuth();
 
   const existingReport = useMemo(
-    () => reports.find((r) => r.id === reportId),
+    () => reports.find((report) => report.id === reportId),
     [reports, reportId]
   );
 
   const isEditing = Boolean(reportId);
 
   const handleSubmit = async (data: ReportFormData) => {
+    if (!user) {
+      throw new Error("Debes iniciar sesión para crear reportes.");
+    }
+
     if (isEditing && existingReport) {
       await editReport(existingReport.id, {
         title: data.title,
@@ -43,7 +43,7 @@ function ReportFormContent() {
       });
     } else {
       await createNewReport({
-        userId: user?.id ?? DEMO_USER_ID,
+        userId: user.id,
         title: data.title,
         description: data.description,
         categoryId: data.categoryId,
@@ -58,7 +58,6 @@ function ReportFormContent() {
     router.push("/reports");
   };
 
-  // Si se llegó con un id pero el reporte no existe aún (cargando)
   if (isEditing && !existingReport && reports.length > 0) {
     return (
       <Card>
@@ -100,8 +99,7 @@ function ReportFormContent() {
   );
 }
 
-// Suspense requerido por useSearchParams en Next.js App Router
-export default function ReportFormPage() {
+function ReportFormPageContent() {
   return (
     <MainLayout>
       <Suspense
@@ -114,5 +112,13 @@ export default function ReportFormPage() {
         <ReportFormContent />
       </Suspense>
     </MainLayout>
+  );
+}
+
+export default function ReportFormPage() {
+  return (
+    <ProtectedRoute>
+      <ReportFormPageContent />
+    </ProtectedRoute>
   );
 }
