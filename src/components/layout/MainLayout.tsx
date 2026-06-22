@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { APP_NAME } from "@/utils/constants";
+import { Logo } from "@/components/ui";
 import type { UserRole } from "@/types";
 
 interface MainLayoutProps {
@@ -46,16 +46,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-600 text-lg font-bold text-white">
-              G
-            </span>
-            <div>
-              <p className="text-sm font-bold leading-none text-slate-900">
-                {APP_NAME}
-              </p>
-              <p className="text-xs text-slate-500">Monitoreo ambiental</p>
-            </div>
+          <Link href="/" className="flex items-center">
+            <Logo size="md" subtitle="Monitoreo ambiental" />
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
