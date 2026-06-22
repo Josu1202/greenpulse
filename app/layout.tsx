@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DatabaseInitializer } from "@/components/layout/DatabaseInitializer";
 
 import "./globals.css";
 
@@ -14,6 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <DatabaseInitializer />
       <body>{children}</body>
     </html>
   );
