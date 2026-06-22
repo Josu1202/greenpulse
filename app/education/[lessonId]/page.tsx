@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { LessonAssistant, LessonQuiz } from "@/components/education";
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   Badge,
   Button,
@@ -111,7 +111,7 @@ export default function EducationLessonDetailPage() {
 
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <div className="space-y-6">
           <Link
             href="/education"
@@ -394,7 +394,7 @@ export default function EducationLessonDetailPage() {
             </>
           ) : null}
         </div>
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }
