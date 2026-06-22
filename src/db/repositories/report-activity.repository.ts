@@ -28,6 +28,12 @@ export async function getActivitiesByReport(
     .sortBy("createdAt");
 }
 
+// Todas las actividades del sistema, de la más reciente a la más antigua.
+// Se usa en el dashboard para construir el feed de actividad reciente real.
+export async function getAllReportActivities(): Promise<ReportActivity[]> {
+  return db.reportActivities.orderBy("createdAt").reverse().toArray();
+}
+
 export async function createReportActivity(
   input: CreateReportActivityInput
 ): Promise<ReportActivity> {
