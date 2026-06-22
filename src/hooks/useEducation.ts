@@ -57,7 +57,7 @@ export function useEducation() {
     }
   }, [user]);
 
-  const getLesson = async (lessonId: string) => {
+  const getLesson = useCallback(async (lessonId: string) => {
     try {
       setError(null);
 
@@ -77,68 +77,70 @@ export function useEducation() {
       setError(message);
       throw error;
     }
-  };
+  }, []);
 
-  const createUserLesson = async (input: CreateUserLessonInput) => {
-    if (!user) {
-      throw new Error("Debes iniciar sesión para crear una lección.");
-    }
+  const createUserLesson = useCallback(
+    async (input: CreateUserLessonInput) => {
+      if (!user) {
+        throw new Error("Debes iniciar sesión para crear una lección.");
+      }
 
-    try {
-      setError(null);
+      try {
+        setError(null);
 
-      const lesson = await createEducationLesson({
-        ...input,
-        createdByUserId: user.id,
-        createdByUserName: user.name,
-      });
+        const lesson = await createEducationLesson({
+          ...input,
+          createdByUserId: user.id,
+          createdByUserName: user.name,
+        });
 
-      await loadEducation();
+        await loadEducation();
 
-      return lesson;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo crear la lección.";
+        return lesson;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo crear la lección.";
 
-      setError(message);
-      throw error;
-    }
-  };
+        setError(message);
+        throw error;
+      }
+    },
+    [loadEducation, user]
+  );
 
-  const completeLesson = async (
-    lessonId: string,
-    score: number,
-    totalQuestions: number
-  ) => {
-    if (!user) {
-      throw new Error("Debes iniciar sesión para completar una lección.");
-    }
+  const completeLesson = useCallback(
+    async (lessonId: string, score: number, totalQuestions: number) => {
+      if (!user) {
+        throw new Error("Debes iniciar sesión para completar una lección.");
+      }
 
-    try {
-      setError(null);
+      try {
+        setError(null);
 
-      const lessonProgress = await completeEducationLesson({
-        userId: user.id,
-        lessonId,
-        score,
-        totalQuestions,
-      });
+        const lessonProgress = await completeEducationLesson({
+          userId: user.id,
+          lessonId,
+          score,
+          totalQuestions,
+        });
 
-      await loadEducation();
+        await loadEducation();
 
-      return lessonProgress;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudo completar la lección.";
+        return lessonProgress;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo completar la lección.";
 
-      setError(message);
-      throw error;
-    }
-  };
+        setError(message);
+        throw error;
+      }
+    },
+    [loadEducation, user]
+  );
 
   const isLessonCompleted = useCallback(
     (lessonId: string) => {
