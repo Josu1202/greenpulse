@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import { DatabaseInitializer } from "@/components/layout/DatabaseInitializer";
+import { AuthProvider } from "@/store";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <DatabaseInitializer />
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
