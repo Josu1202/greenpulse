@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Camera,
   Loader2,
@@ -17,7 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
-import type { WasteRecognitionResult } from "@/types";
+import { useCategories } from "@/hooks";
+import type { ReportPriority, WasteRecognitionResult } from "@/types";
+import { saveRecognitionReportDraft } from "@/utils";
 
 import { RecognitionResultCard } from "./RecognitionResultCard";
 
@@ -44,6 +47,9 @@ async function analyzeWasteImage(
 }
 
 export function CameraRecognition() {
+  const router = useRouter();
+  const { categories } = useCategories();
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -184,6 +190,75 @@ export function CameraRecognition() {
     }
   };
 
+  function getSuggestedCategoryId() {
+    const wasteCategory = categories.find((category) => {
+      const normalizedName = category.name.toLowerCase();
+
+      return (
+        category.id === "waste" ||
+        normalizedName.includes("residuo") ||
+        normalizedName.includes("basura") ||
+        normalizedName.includes("desecho")
+      );
+    });
+
+    return wasteCategory?.id ?? "";
+  }
+
+  function getPriorityFromResult(
+    recognitionResult: WasteRecognitionResult
+  ): ReportPriority {
+    if (
+      recognitionResult.wasteType === "hazardous" ||
+      recognitionResult.wasteType === "electronic"
+    ) {
+      return "high";
+    }
+
+    if (
+      recognitionResult.confidence === "low" ||
+      recognitionResult.wasteType === "not_identified"
+    ) {
+      return "low";
+    }
+
+    return "medium";
+  }
+
+  const handleCreateReportFromRecognition = () => {
+    if (!result || !capturedImage) {
+      return;
+    }
+
+    saveRecognitionReportDraft({
+      title: `Residuo detectado: ${result.objectName}`,
+      description: `Reporte generado desde el módulo de reconocimiento ambiental.
+
+Tipo de residuo detectado: ${result.wasteTypeLabel}
+Objeto observado: ${result.objectName}
+Confianza del reconocimiento: ${result.confidence}
+
+Explicación:
+${result.explanation}
+
+Recomendación:
+${result.recommendation}
+
+Disposición sugerida:
+${result.binSuggestion}
+
+Tip ambiental:
+${result.environmentalTip}`,
+      categoryId: getSuggestedCategoryId(),
+      priority: getPriorityFromResult(result),
+      status: "pending",
+      image: capturedImage,
+      createdAt: new Date().toISOString(),
+    });
+
+    router.push("/reports/new?from=recognition");
+  };
+
   useEffect(() => {
     return () => {
       stopCamera(false);
@@ -216,6 +291,7 @@ export function CameraRecognition() {
           <CardContent className="space-y-4 p-5">
             <div className="relative overflow-hidden rounded-3xl bg-slate-950">
               {capturedImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={capturedImage}
                   alt="Residuo capturado"
@@ -281,7 +357,10 @@ export function CameraRecognition() {
 
               {capturedImage ? (
                 <>
-                  <Button onClick={handleAnalyze} disabled={isAnalyzing}>
+                  <Button
+                    onClick={() => void handleAnalyze()}
+                    disabled={isAnalyzing}
+                  >
                     {isAnalyzing ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -313,7 +392,19 @@ export function CameraRecognition() {
 
       <div className="space-y-6">
         {result ? (
-          <RecognitionResultCard result={result} />
+          <div className="space-y-4">
+            <RecognitionResultCard result={result} />
+
+            <Button className="w-full" onClick={handleCreateReportFromRecognition}>
+              Crear reporte con este residuo
+            </Button>
+
+            <p className="text-xs leading-5 text-slate-500">
+              Se abrirá el formulario de reportes con la foto y los detalles del
+              reconocimiento. La ubicación no se rellenará automáticamente para
+              respetar el selector de ubicación del formulario.
+            </p>
+          </div>
         ) : (
           <Card>
             <CardHeader>
