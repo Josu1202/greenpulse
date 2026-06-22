@@ -5,6 +5,7 @@ import {
   Bot,
   Lightbulb,
   ListChecks,
+  Loader2,
   MessageCircle,
   Send,
   Sparkles,
@@ -23,6 +24,7 @@ interface LessonAssistantProps {
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
+  source?: "gemini" | "local";
 }
 
 type QuickAction =
@@ -93,7 +95,7 @@ function getKeywords(question: string) {
     .filter((word) => word.length > 3 && !ignoredWords.includes(word));
 }
 
-function buildAssistantAnswer(question: string, content: string) {
+function buildLocalAnswer(question: string, content: string) {
   const keywords = getKeywords(question);
   const sentences = getSentences(content);
 
@@ -110,7 +112,7 @@ function buildAssistantAnswer(question: string, content: string) {
   return `Según la lectura: ${matches.slice(0, 2).join(" ")}`;
 }
 
-function buildQuickActionAnswer(action: QuickAction, content: string) {
+function buildLocalQuickActionAnswer(action: QuickAction, content: string) {
   const sentences = getSentences(content);
   const normalizedContent = normalizeText(content);
 
@@ -146,6 +148,37 @@ function buildQuickActionAnswer(action: QuickAction, content: string) {
   }
 
   return "Para prepararte para las preguntas, revisa: 1) cuál es el problema ambiental principal, 2) qué lo causa, 3) qué consecuencias tiene y 4) qué acciones pueden ayudar a reducirlo.";
+}
+
+async function askAiAssistant(params: {
+  lessonTitle: string;
+  lessonContent: string;
+  question: string;
+  mode: QuickAction | "question";
+}) {
+  const response = await fetch("/api/education-assistant", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error("No se pudo consultar el asistente IA.");
+  }
+
+  const data = (await response.json()) as {
+    answer: string | null;
+    source?: "gemini" | "fallback";
+    message?: string;
+  };
+
+  if (!data.answer) {
+    throw new Error(data.message ?? "El asistente IA no devolvió respuesta.");
+  }
+
+  return data.answer;
 }
 
 const quickActions: {
@@ -187,53 +220,80 @@ export function LessonAssistant({
 }: LessonAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      text: `Hola, puedo ayudarte a entender la lección "${lessonTitle}". Puedo resumirla, sacar ideas clave o responder preguntas usando el texto.`,
+      text: `Hola, puedo ayudarte a entender la lección "${lessonTitle}". Intentaré usar IA y, si no está disponible, usaré el asistente local.`,
+      source: "local",
     },
   ]);
 
-  const canSend = useMemo(() => inputValue.trim().length > 0, [inputValue]);
+  const canSend = useMemo(
+    () => inputValue.trim().length > 0 && !isThinking,
+    [inputValue, isThinking]
+  );
 
-  const handleSend = () => {
-    const question = inputValue.trim();
+  const addConversationTurn = (
+    userText: string,
+    assistantText: string,
+    source: "gemini" | "local"
+  ) => {
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      {
+        role: "user",
+        text: userText,
+      },
+      {
+        role: "assistant",
+        text: assistantText,
+        source,
+      },
+    ]);
+  };
 
-    if (!question) {
+  const handleAsk = async (
+    userText: string,
+    mode: QuickAction | "question"
+  ) => {
+    if (!userText.trim()) {
       return;
     }
 
-    const answer = buildAssistantAnswer(question, lessonContent);
+    try {
+      setIsThinking(true);
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        role: "user",
-        text: question,
-      },
-      {
-        role: "assistant",
-        text: answer,
-      },
-    ]);
+      const answer = await askAiAssistant({
+        lessonTitle,
+        lessonContent,
+        question: userText,
+        mode,
+      });
 
-    setInputValue("");
+      setUsingFallback(false);
+      addConversationTurn(userText, answer, "gemini");
+    } catch {
+      const localAnswer =
+        mode === "question"
+          ? buildLocalAnswer(userText, lessonContent)
+          : buildLocalQuickActionAnswer(mode, lessonContent);
+
+      setUsingFallback(true);
+      addConversationTurn(userText, localAnswer, "local");
+    } finally {
+      setIsThinking(false);
+      setInputValue("");
+    }
+  };
+
+  const handleSend = () => {
+    void handleAsk(inputValue.trim(), "question");
   };
 
   const handleQuickAction = (action: QuickAction, label: string) => {
-    const answer = buildQuickActionAnswer(action, lessonContent);
-
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        role: "user",
-        text: label,
-      },
-      {
-        role: "assistant",
-        text: answer,
-      },
-    ]);
+    void handleAsk(label, action);
   };
 
   if (disabled) {
@@ -251,9 +311,11 @@ export function LessonAssistant({
               </div>
 
               <div>
-                <p className="text-sm font-semibold">Asistente educativo</p>
+                <p className="text-sm font-semibold">Asistente educativo IA</p>
                 <p className="text-xs text-green-100">
-                  Basado en el contenido de la lección
+                  {usingFallback
+                    ? "Modo local activo"
+                    : "Con Gemini + respaldo local"}
                 </p>
               </div>
             </div>
@@ -284,7 +346,8 @@ export function LessonAssistant({
                     onClick={() =>
                       handleQuickAction(quickAction.action, quickAction.label)
                     }
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700"
+                    disabled={isThinking}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-green-200 hover:bg-green-50 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {quickAction.label}
@@ -305,9 +368,24 @@ export function LessonAssistant({
                     : "mr-auto bg-white text-slate-700 shadow-sm"
                 )}
               >
-                {message.text}
+                <p>{message.text}</p>
+
+                {message.role === "assistant" && message.source ? (
+                  <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-400">
+                    {message.source === "gemini"
+                      ? "Respuesta IA"
+                      : "Respuesta local"}
+                  </p>
+                ) : null}
               </div>
             ))}
+
+            {isThinking ? (
+              <div className="mr-auto flex max-w-[88%] items-center gap-2 rounded-2xl bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Pensando...
+              </div>
+            ) : null}
           </div>
 
           <div className="border-t border-slate-200 bg-white p-3">
@@ -325,7 +403,11 @@ export function LessonAssistant({
               />
 
               <Button onClick={handleSend} disabled={!canSend}>
-                <Send className="h-4 w-4" />
+                {isThinking ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </div>
 
