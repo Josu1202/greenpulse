@@ -36,7 +36,7 @@ export function StatusChart({
           Aún no hay reportes para mostrar.
         </p>
       ) : (
-        <div className="h-72 w-full">
+        <div className="h-72 w-full" style={{ minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 8, right: 8, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />

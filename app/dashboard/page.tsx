@@ -87,6 +87,6 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-    </DashboardLayout>
+    </MainLayout>
   );
 }
