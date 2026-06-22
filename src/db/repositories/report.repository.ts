@@ -21,6 +21,7 @@ export interface CreateReportInput extends ReportActorInput {
   latitude: number;
   longitude: number;
   image?: string;
+  images?: string[];
   status?: ReportStatus;
 }
 
@@ -33,6 +34,7 @@ export interface UpdateReportInput {
   latitude?: number;
   longitude?: number;
   image?: string;
+  images?: string[];
 }
 
 export interface AddReportCommentInput extends ReportActorInput {
@@ -189,7 +191,8 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
     priority: input.priority,
     latitude: input.latitude,
     longitude: input.longitude,
-    image: input.image,
+    image: input.images?.[0] ?? input.image,
+    images: input.images ?? (input.image ? [input.image] : []),
     createdAt: now,
     updatedAt: now,
   };
@@ -269,6 +272,11 @@ export async function updateReport(
 
   if (input.image !== undefined) {
     changes.image = input.image;
+  }
+
+  if (input.images !== undefined) {
+    changes.images = input.images;
+    changes.image = input.images[0];
   }
 
   await db.transaction(

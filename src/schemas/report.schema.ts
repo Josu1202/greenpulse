@@ -26,6 +26,7 @@ export const reportSchema = z.object({
     .min(-180, "La longitud mínima es -180.")
     .max(180, "La longitud máxima es 180."),
   image: z.string().optional(),
+  images: z.array(z.string()).optional(),
 });
 
 const commentActivitySchema = z.object({
