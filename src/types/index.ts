@@ -4,3 +4,4 @@ export * from "./report";
 export * from "./ReportActivity";
 export * from "./status";
 export * from "./settings";
+export * from "./education";
