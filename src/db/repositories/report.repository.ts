@@ -129,6 +129,12 @@ async function getUpdatedReport(id: string): Promise<Report> {
 }
 
 export async function getAllReports(): Promise<Report[]> {
+  const reports = await db.reports.orderBy("createdAt").reverse().toArray();
+
+  return reports.filter((report) => report.isHidden !== true);
+}
+
+export async function getAllReportsForAdmin(): Promise<Report[]> {
   return db.reports.orderBy("createdAt").reverse().toArray();
 }
 
@@ -142,7 +148,7 @@ export async function getReportsByUser(userId: string): Promise<Report[]> {
     .equals(userId)
     .sortBy("createdAt");
 
-  return reports.reverse();
+  return reports.reverse().filter((report) => report.isHidden !== true);
 }
 
 export async function getReportsByCategory(
@@ -153,7 +159,7 @@ export async function getReportsByCategory(
     .equals(categoryId)
     .sortBy("createdAt");
 
-  return reports.reverse();
+  return reports.reverse().filter((report) => report.isHidden !== true);
 }
 
 export async function getReportsByStatus(
@@ -164,7 +170,7 @@ export async function getReportsByStatus(
     .equals(status)
     .sortBy("createdAt");
 
-  return reports.reverse();
+  return reports.reverse().filter((report) => report.isHidden !== true);
 }
 
 export async function createReport(input: CreateReportInput): Promise<Report> {
@@ -193,6 +199,7 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
     longitude: input.longitude,
     image: input.images?.[0] ?? input.image,
     images: input.images ?? (input.image ? [input.image] : []),
+    isHidden: false,
     createdAt: now,
     updatedAt: now,
   };
@@ -544,6 +551,144 @@ export async function deleteReport(
 
   ensureReportOwner(existingReport, actorUserId);
   ensureReportOpen(existingReport);
+
+  await db.transaction(
+    "rw",
+    db.reports,
+    db.statusLogs,
+    db.reportActivities,
+    async () => {
+      await db.statusLogs.where("reportId").equals(id).delete();
+      await db.reportActivities.where("reportId").equals(id).delete();
+      await db.reports.delete(id);
+    }
+  );
+}
+
+
+export interface AdminUpdateReportInput {
+  categoryId?: string;
+  status?: ReportStatus;
+  priority?: ReportPriority;
+}
+
+export async function adminUpdateReport(
+  id: string,
+  input: AdminUpdateReportInput,
+  actor: ReportActorInput
+): Promise<Report> {
+  const existingReport = await db.reports.get(id);
+
+  if (!existingReport) {
+    throw new Error("El reporte no existe.");
+  }
+
+  const changes: Partial<Report> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.categoryId !== undefined) {
+    changes.categoryId = normalizeText(input.categoryId);
+  }
+
+  if (input.status !== undefined) {
+    changes.status = input.status;
+  }
+
+  if (input.priority !== undefined) {
+    changes.priority = input.priority;
+  }
+
+  await db.transaction(
+    "rw",
+    db.reports,
+    db.statusLogs,
+    db.reportActivities,
+    async () => {
+      await db.reports.update(id, changes);
+
+      if (input.status !== undefined && input.status !== existingReport.status) {
+        await db.statusLogs.add({
+          id: crypto.randomUUID(),
+          reportId: id,
+          previousStatus: existingReport.status,
+          newStatus: input.status,
+          changedAt: changes.updatedAt as string,
+        });
+      }
+
+      if (
+        (input.status !== undefined && input.status !== existingReport.status) ||
+        (input.priority !== undefined &&
+          input.priority !== existingReport.priority) ||
+        (input.categoryId !== undefined &&
+          input.categoryId !== existingReport.categoryId)
+      ) {
+        await createReportActivity({
+          reportId: id,
+          userId: actor.userId,
+          userName: actor.userName,
+          userProfileImage: actor.userProfileImage,
+          type: "progress_update",
+          comment: "Administración actualizó datos de control del reporte.",
+          previousStatus: existingReport.status,
+          newStatus: input.status ?? existingReport.status,
+          previousPriority: existingReport.priority,
+          newPriority: input.priority ?? existingReport.priority,
+        });
+      }
+    }
+  );
+
+  return getUpdatedReport(id);
+}
+
+export async function adminHideReport(
+  id: string,
+  hiddenBy: string,
+  hiddenReason?: string
+): Promise<Report> {
+  const existingReport = await db.reports.get(id);
+
+  if (!existingReport) {
+    throw new Error("El reporte no existe.");
+  }
+
+  await db.reports.update(id, {
+    isHidden: true,
+    hiddenBy,
+    hiddenReason: hiddenReason?.trim() || "Ocultado por administración.",
+    hiddenAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  } as Partial<Report>);
+
+  return getUpdatedReport(id);
+}
+
+export async function adminRestoreReport(id: string): Promise<Report> {
+  const existingReport = await db.reports.get(id);
+
+  if (!existingReport) {
+    throw new Error("El reporte no existe.");
+  }
+
+  await db.reports.update(id, {
+    isHidden: false,
+    hiddenBy: undefined,
+    hiddenReason: undefined,
+    hiddenAt: undefined,
+    updatedAt: new Date().toISOString(),
+  } as Partial<Report>);
+
+  return getUpdatedReport(id);
+}
+
+export async function adminDeleteReport(id: string): Promise<void> {
+  const existingReport = await db.reports.get(id);
+
+  if (!existingReport) {
+    throw new Error("El reporte no existe.");
+  }
 
   await db.transaction(
     "rw",

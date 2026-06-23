@@ -138,6 +138,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     passwordSalt,
     role: input.role ?? "student",
     profileImage: input.profileImage,
+    isActive: true,
     createdAt: now,
     updatedAt: now,
   };
@@ -306,6 +307,10 @@ export async function validateUserLogin(
     return null;
   }
 
+  if (user.isActive === false) {
+    throw new Error("El usuario está desactivado. Contacta al administrador.");
+  }
+
   const isValidPassword = await validateStoredUserPassword(
     user as LegacyUser,
     password
@@ -315,7 +320,30 @@ export async function validateUserLogin(
     return null;
   }
 
+  await db.users.update(user.id, {
+    lastLoginAt: new Date().toISOString(),
+    isActive: true,
+  } as Partial<User>);
+
   return getFreshUser(user.id);
+}
+
+export async function setUserActiveStatus(
+  id: string,
+  isActive: boolean
+): Promise<User> {
+  const existingUser = await getUserById(id);
+
+  if (!existingUser) {
+    throw new Error("El usuario no existe.");
+  }
+
+  await db.users.update(id, {
+    isActive,
+    updatedAt: new Date().toISOString(),
+  } as Partial<User>);
+
+  return getFreshUser(id);
 }
 
 export async function deleteUser(id: string): Promise<void> {

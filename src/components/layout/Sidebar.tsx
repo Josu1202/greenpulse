@@ -13,6 +13,7 @@ import {
   MapPin,
   PlusCircle,
   UserCircle,
+  ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -26,7 +27,7 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Reportes", href: "/reports", icon: FileText },
   { label: "Nuevo reporte", href: "/reports/new", icon: PlusCircle },
@@ -35,6 +36,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Reconocimiento", href: "/recognition", icon: Camera },
   { label: "Mi perfil", href: "/profile", icon: UserCircle },
 ];
+
+const ADMIN_NAV_ITEM: NavItem = {
+  label: "Admin",
+  href: "/admin",
+  icon: ShieldCheck,
+};
 
 interface SidebarProps {
   /** Se llama al navegar (usado para cerrar el drawer en móvil). */
@@ -51,9 +58,10 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const navItems = user?.role === "admin" ? [...BASE_NAV_ITEMS, ADMIN_NAV_ITEM] : BASE_NAV_ITEMS;
 
-  const activeHref = NAV_ITEMS.filter(
+  const activeHref = navItems.filter(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
   ).sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
@@ -109,7 +117,7 @@ export function Sidebar({
 
       {/* Navegación */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const isActive = item.href === activeHref;
           const Icon = item.icon;
 

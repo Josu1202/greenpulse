@@ -227,9 +227,12 @@ export default function CreateEducationLessonPage() {
     try {
       setIsSaving(true);
 
-      const lesson = await createUserLesson(validation.data);
+      await createUserLesson(validation.data);
 
-      router.push(`/education/${lesson.id}`);
+      window.alert(
+        "Lectura enviada a revisión. Un administrador debe aprobarla antes de que aparezca publicada."
+      );
+      router.push("/education");
     } catch (error) {
       const message =
         error instanceof Error

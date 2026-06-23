@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Clock, UserRound } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock, Star, UserRound } from "lucide-react";
 
 import {
   Badge,
@@ -38,10 +38,17 @@ export function EducationLessonCard({
           </div>
         )}
 
-        <div className="absolute left-4 top-4">
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
           <Badge variant={lesson.source === "base" ? "success" : "info"}>
             {lesson.source === "base" ? "Lección base" : "Creada por usuario"}
           </Badge>
+
+          {lesson.isFeatured ? (
+            <Badge variant="warning" className="gap-1 bg-white/90 text-amber-700 shadow-sm">
+              <Star className="h-3.5 w-3.5" />
+              Destacada
+            </Badge>
+          ) : null}
         </div>
 
         {isCompleted ? (

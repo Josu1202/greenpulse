@@ -4,45 +4,34 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { DashboardLayout } from "./DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 
-interface ProtectedRouteProps {
+interface AdminRouteProps {
   children: ReactNode;
-  /**
-   * El panel administrativo usa AdminRoute. Las pantallas normales no deben
-   * mezclarse con la lógica del administrador, por eso se bloquean por defecto.
-   */
-  allowAdmin?: boolean;
 }
 
-export function ProtectedRoute({
-  children,
-  allowAdmin = false,
-}: ProtectedRouteProps) {
+export function AdminRoute({ children }: AdminRouteProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.replace("/login");
       return;
     }
 
-    if (isAdmin && !allowAdmin) {
-      router.replace("/admin");
+    if (!isLoading && isAuthenticated && !isAdmin) {
+      router.replace("/dashboard");
     }
-  }, [allowAdmin, isAdmin, isAuthenticated, isLoading, router]);
+  }, [isAdmin, isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-sm text-slate-500">
-        Cargando sesión...
+        Cargando sesión administrativa...
       </div>
     );
   }
@@ -55,11 +44,13 @@ export function ProtectedRoute({
     );
   }
 
-  if (isAdmin && !allowAdmin) {
+  if (!isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-sm text-slate-500">
-        Redirigiendo al panel administrativo...
-      </div>
+      <DashboardLayout>
+        <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 text-sm text-yellow-800">
+          No tienes permisos para entrar al panel administrativo.
+        </div>
+      </DashboardLayout>
     );
   }
 

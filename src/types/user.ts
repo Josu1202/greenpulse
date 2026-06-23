@@ -8,6 +8,8 @@ export interface User {
   passwordSalt: string;
   role: UserRole;
   profileImage?: string;
+  isActive?: boolean;
+  lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
 }

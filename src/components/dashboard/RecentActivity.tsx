@@ -7,7 +7,6 @@ interface RecentActivityProps {
   events: DashboardEvent[];
 }
 
-// Verbo/etiqueta corta según el tipo de evento.
 const KIND_LABEL: Record<DashboardEvent["kind"], string> = {
   created: "Nuevo reporte",
   comment: "Comentario",
@@ -61,35 +60,37 @@ export function RecentActivity({ events = [] }: RecentActivityProps) {
           No hay actividad reciente.
         </p>
       ) : (
-        <ul className="space-y-1">
-          {events.map((event) => (
-            <li
-              key={event.id}
-              className="flex gap-3 rounded-lg px-2 py-2.5 hover:bg-slate-50"
-            >
-              <span
-                aria-hidden
-                className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: event.categoryColor }}
-              />
+        <div className="max-h-[360px] overflow-y-auto pr-2">
+          <ul className="space-y-1">
+            {events.map((event) => (
+              <li
+                key={event.id}
+                className="flex gap-3 rounded-lg px-2 py-2.5 hover:bg-slate-50"
+              >
+                <span
+                  aria-hidden
+                  className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: event.categoryColor }}
+                />
 
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-slate-800">
-                  <span className="font-medium">{event.userName}</span>{" "}
-                  {event.description}
-                </p>
-                <p className="truncate text-xs text-slate-500">
-                  {KIND_LABEL[event.kind]} · {event.reportTitle} ·{" "}
-                  {event.categoryName}
-                </p>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-800">
+                    <span className="font-medium">{event.userName}</span>{" "}
+                    {event.description}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {KIND_LABEL[event.kind]} · {event.reportTitle} ·{" "}
+                    {event.categoryName}
+                  </p>
+                </div>
 
-              <span className="shrink-0 whitespace-nowrap text-xs text-slate-400">
-                {tiempoRelativo(event.createdAt)}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span className="shrink-0 whitespace-nowrap text-xs text-slate-400">
+                  {tiempoRelativo(event.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </Card>
   );
