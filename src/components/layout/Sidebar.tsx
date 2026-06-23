@@ -3,11 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Camera,
-  ChevronLeft,
-  ChevronRight,
+  Activity,
   FileText,
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -16,7 +13,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-import { Logo } from "@/components/ui";
+import { APP_NAME } from "@/utils/constants";
 import { cn } from "@/utils";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -31,25 +28,14 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Reportes", href: "/reports", icon: FileText },
   { label: "Nuevo reporte", href: "/reports/new", icon: PlusCircle },
   { label: "Mapa", href: "/map", icon: MapPin },
-  { label: "Educación", href: "/education", icon: GraduationCap },
-  { label: "Reconocimiento", href: "/recognition", icon: Camera },
   { label: "Mi perfil", href: "/profile", icon: UserCircle },
 ];
 
 interface SidebarProps {
-  /** Se llama al navegar (usado para cerrar el drawer en móvil). */
   onNavigate?: () => void;
-  /** Modo riel de íconos (solo escritorio). */
-  collapsed?: boolean;
-  /** Si se provee, muestra el botón de colapsar/expandir. */
-  onToggleCollapse?: () => void;
 }
 
-export function Sidebar({
-  onNavigate,
-  collapsed = false,
-  onToggleCollapse,
-}: SidebarProps) {
+export function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
 
@@ -63,44 +49,14 @@ export function Sidebar({
   };
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col bg-green-900 text-green-100 transition-[width] duration-200",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      {/* Encabezado: logo + botón de colapsar */}
-      <div
-        className={cn(
-          "flex py-5",
-          collapsed
-            ? "flex-col items-center gap-3 px-2"
-            : "items-center gap-2 px-4"
-        )}
-      >
-        <Logo size="md" tone="light" withText={!collapsed} />
-
-        {onToggleCollapse ? (
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className={cn(
-              "rounded-lg p-1.5 text-green-100/80 transition-colors hover:bg-white/10 hover:text-white",
-              !collapsed && "ml-auto"
-            )}
-            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-            title={collapsed ? "Expandir menú" : "Colapsar menú"}
-          >
-            {collapsed ? (
-              <ChevronRight className="h-5 w-5" />
-            ) : (
-              <ChevronLeft className="h-5 w-5" />
-            )}
-          </button>
-        ) : null}
+    <div className="flex h-full w-64 flex-col bg-green-900 text-green-100">
+      <div className="flex items-center gap-2 px-5 py-5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-green-700">
+          <Activity className="h-5 w-5" />
+        </span>
+        <span className="text-lg font-bold text-white">{APP_NAME}</span>
       </div>
 
-      {/* Navegación */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === activeHref;
@@ -111,35 +67,28 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              title={collapsed ? item.label : undefined}
               className={cn(
-                "flex items-center rounded-lg text-sm font-medium transition-colors",
-                collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-2.5",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-white/15 text-white"
                   : "text-green-100/80 hover:bg-white/10 hover:text-white"
               )}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {collapsed ? null : item.label}
+              {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Cerrar sesión */}
       <div className="border-t border-white/10 p-3">
         <button
           type="button"
           onClick={handleLogout}
-          title={collapsed ? "Cerrar sesión" : undefined}
-          className={cn(
-            "flex w-full items-center rounded-lg text-sm font-medium text-green-100/80 transition-colors hover:bg-white/10 hover:text-white",
-            collapsed ? "justify-center px-0 py-3" : "gap-3 px-3 py-2.5"
-          )}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-green-100/80 transition-colors hover:bg-white/10 hover:text-white"
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {collapsed ? null : "Cerrar sesión"}
+          Cerrar sesión
         </button>
       </div>
     </div>

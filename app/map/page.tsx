@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { DashboardLayout, ProtectedRoute } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import { Card } from "@/components/ui";
 import { MapFilters, MapView } from "@/components/maps";
 import { useCategories, useReports } from "@/hooks";
@@ -33,7 +33,7 @@ function MapContent() {
   }, [filteredReports, selectedPriority]);
 
   return (
-    <DashboardLayout>
+    <MainLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-950">Mapa ambiental</h1>
@@ -71,7 +71,7 @@ function MapContent() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </MainLayout>
   );
 }
 
