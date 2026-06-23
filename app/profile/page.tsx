@@ -5,7 +5,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import Image from "next/image";
 import { Camera, KeyRound, Save, UserCircle } from "lucide-react";
 import { EducationBadgesPanel } from "@/components/education";
-import { DashboardLayout, ProtectedRoute } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import {
   Button,
   Card,
@@ -113,7 +113,7 @@ function ProfileForm({ user }: ProfileFormProps) {
   };
 
   return (
-    <DashboardLayout>
+    <MainLayout>
       <div className="mx-auto max-w-4xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Mi perfil</h1>
@@ -299,7 +299,7 @@ function ProfileForm({ user }: ProfileFormProps) {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </MainLayout>
   );
 }
 
@@ -309,11 +309,11 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
       {isLoading ? (
-        <DashboardLayout>
+        <MainLayout>
           <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
             Cargando perfil...
           </div>
-        </DashboardLayout>
+        </MainLayout>
       ) : user ? (
         <ProfileForm key={user.id} user={user} />
       ) : null}

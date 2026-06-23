@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { DashboardLayout, ProtectedRoute } from "@/components/layout";
+import { MainLayout, ProtectedRoute } from "@/components/layout";
 import {
   Button,
   Card,
@@ -182,7 +182,7 @@ function ReportFormContent() {
 export default function ReportFormPage() {
   return (
     <ProtectedRoute>
-      <DashboardLayout>
+      <MainLayout>
         <Suspense
           fallback={
             <p className="py-8 text-center text-slate-500">
@@ -192,7 +192,7 @@ export default function ReportFormPage() {
         >
           <ReportFormContent />
         </Suspense>
-      </DashboardLayout>
+      </MainLayout>
     </ProtectedRoute>
   );
 }
