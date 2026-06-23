@@ -15,5 +15,9 @@ export interface ReportActivity {
   newStatus?: ReportStatus;
   previousPriority?: ReportPriority;
   newPriority?: ReportPriority;
+  isHidden?: boolean;
+  hiddenReason?: string;
+  hiddenAt?: string;
+  hiddenBy?: string;
   createdAt: string;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button, ConfirmDialog, Input, Select, Textarea } from "@/components/ui";
 import type { Category, Report, ReportStatus } from "@/types";
@@ -22,18 +22,7 @@ interface ReportFormProps {
 
 const TITLE_MIN = 3;
 const DESCRIPTION_MIN = 10;
-const DRAFT_KEY = "greenpulse:report-draft";
 const DUPLICATE_RADIUS_M = 50;
-
-interface DraftShape {
-  title: string;
-  description: string;
-  categoryId: string;
-  priority: string;
-  latitude: string;
-  longitude: string;
-  images: string[];
-}
 
 // Distancia aproximada en metros entre dos coordenadas (haversine).
 function distanceMeters(
@@ -114,94 +103,6 @@ export function ReportForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReadingImage, setIsReadingImage] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [draftAvailable, setDraftAvailable] = useState(false);
-
-  // --- Autoguardado de borrador (solo para reportes nuevos sin prefill) ---
-  // Si el formulario viene prellenado desde el reconocimiento de residuos
-  // (initialData), no mostramos el banner de restaurar para no competir con él.
-  const allowDraft = !isEditing && !initialData;
-
-  useEffect(() => {
-    if (!allowDraft || typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        setDraftAvailable(true);
-      }
-    } catch {
-      // localStorage no disponible.
-    }
-  }, [allowDraft]);
-
-  useEffect(() => {
-    if (isEditing || typeof window === "undefined") {
-      return;
-    }
-
-    const draft: DraftShape = {
-      title,
-      description,
-      categoryId,
-      priority,
-      latitude,
-      longitude,
-      images,
-    };
-
-    const isEmpty =
-      !title && !description && !categoryId && !priority && !latitude;
-
-    try {
-      if (isEmpty) {
-        window.localStorage.removeItem(DRAFT_KEY);
-      } else {
-        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-      }
-    } catch {
-      // Se ignora.
-    }
-  }, [
-    isEditing,
-    title,
-    description,
-    categoryId,
-    priority,
-    latitude,
-    longitude,
-    images,
-  ]);
-
-  const clearDraft = () => {
-    try {
-      window.localStorage.removeItem(DRAFT_KEY);
-    } catch {
-      // Se ignora.
-    }
-    setDraftAvailable(false);
-  };
-
-  const restoreDraft = () => {
-    try {
-      const raw = window.localStorage.getItem(DRAFT_KEY);
-      if (raw) {
-        const draft = JSON.parse(raw) as DraftShape;
-        setTitle(draft.title ?? "");
-        setDescription(draft.description ?? "");
-        setCategoryId(draft.categoryId ?? "");
-        setPriority(draft.priority ?? "");
-        setLatitude(draft.latitude ?? "");
-        setLongitude(draft.longitude ?? "");
-        setImages(Array.isArray(draft.images) ? draft.images : []);
-      }
-    } catch {
-      // Se ignora.
-    }
-    setDraftAvailable(false);
-  };
-
   // --- Validación en vivo ---
   const liveErrors = useMemo(() => {
     const result = reportSchema.safeParse({
@@ -310,9 +211,6 @@ export function ReportForm({
     try {
       setIsSubmitting(true);
       await onSubmit(result.data);
-      if (!isEditing) {
-        clearDraft();
-      }
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -340,22 +238,6 @@ export function ReportForm({
 
   return (
     <div className="space-y-4">
-      {draftAvailable ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-800">
-            Tienes un borrador sin terminar. ¿Quieres restaurarlo?
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={clearDraft}>
-              Descartar
-            </Button>
-            <Button variant="primary" size="sm" onClick={restoreDraft}>
-              Restaurar
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Input

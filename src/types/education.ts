@@ -1,5 +1,7 @@
 export type EducationLessonSource = "base" | "user";
 
+export type EducationLessonStatus = "pending_review" | "published" | "hidden";
+
 export interface EducationQuestionOption {
   id: string;
   text: string;
@@ -22,6 +24,8 @@ export interface EducationLesson {
   referenceImages?: string[];
   estimatedMinutes: number;
   source: EducationLessonSource;
+  status?: EducationLessonStatus;
+  isFeatured?: boolean;
   createdByUserId?: string;
   createdByUserName?: string;
   questions: EducationQuestion[];

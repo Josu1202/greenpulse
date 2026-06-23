@@ -13,7 +13,7 @@ interface MainLayoutProps {
   children: ReactNode;
 }
 
-const publicNavItems = [
+const basePublicNavItems = [
   { label: "Inicio", href: "/" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Reportes", href: "/reports" },
@@ -21,6 +21,8 @@ const publicNavItems = [
   { label: "Educación", href: "/education" },
   { label: "Reconocimiento", href: "/recognition" },
 ];
+
+const adminNavItems = [{ label: "Panel admin", href: "/admin" }];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   student: "Usuario ambiental",
@@ -41,17 +43,20 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { user, isLoading, isAuthenticated, logout } = useAuth();
 
   const initials = user ? getInitials(user.name) || "GP" : "GP";
+  const navItems = user?.role === "admin" ? adminNavItems : basePublicNavItems;
+  const homeHref = user?.role === "admin" ? "/admin" : "/";
+  const profileHref = user?.role === "admin" ? "/admin/users" : "/profile";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center">
+          <Link href={homeHref} className="flex items-center">
             <Logo size="md" subtitle="Monitoreo ambiental" />
           </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
-            {publicNavItems.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -68,7 +73,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             ) : isAuthenticated && user ? (
               <div className="flex items-center gap-3">
                 <Link
-                  href="/profile"
+                  href={profileHref}
                   className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-100"
                 >
                   {user.profileImage ? (

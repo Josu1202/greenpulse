@@ -22,15 +22,21 @@ function normalizeComment(comment: string): string {
 export async function getActivitiesByReport(
   reportId: string
 ): Promise<ReportActivity[]> {
-  return db.reportActivities
+  const activities = await db.reportActivities
     .where("reportId")
     .equals(reportId)
     .sortBy("createdAt");
+
+  return activities.filter((activity) => activity.isHidden !== true);
 }
 
-// Todas las actividades del sistema, de la más reciente a la más antigua.
-// Se usa en el dashboard para construir el feed de actividad reciente real.
 export async function getAllReportActivities(): Promise<ReportActivity[]> {
+  const activities = await db.reportActivities.orderBy("createdAt").reverse().toArray();
+
+  return activities.filter((activity) => activity.isHidden !== true);
+}
+
+export async function getAllReportActivitiesForAdmin(): Promise<ReportActivity[]> {
   return db.reportActivities.orderBy("createdAt").reverse().toArray();
 }
 
@@ -56,12 +62,57 @@ export async function createReportActivity(
     newStatus: input.newStatus,
     previousPriority: input.previousPriority,
     newPriority: input.newPriority,
+    isHidden: false,
     createdAt: new Date().toISOString(),
   };
 
   await db.reportActivities.add(activity);
 
   return activity;
+}
+
+export async function hideReportActivity(
+  id: string,
+  hiddenBy: string,
+  hiddenReason?: string
+): Promise<void> {
+  const activity = await db.reportActivities.get(id);
+
+  if (!activity) {
+    throw new Error("La actividad no existe.");
+  }
+
+  await db.reportActivities.update(id, {
+    isHidden: true,
+    hiddenBy,
+    hiddenReason: hiddenReason?.trim() || "Ocultado por administración.",
+    hiddenAt: new Date().toISOString(),
+  } as Partial<ReportActivity>);
+}
+
+export async function restoreReportActivity(id: string): Promise<void> {
+  const activity = await db.reportActivities.get(id);
+
+  if (!activity) {
+    throw new Error("La actividad no existe.");
+  }
+
+  await db.reportActivities.update(id, {
+    isHidden: false,
+    hiddenBy: undefined,
+    hiddenReason: undefined,
+    hiddenAt: undefined,
+  } as Partial<ReportActivity>);
+}
+
+export async function deleteReportActivity(id: string): Promise<void> {
+  const activity = await db.reportActivities.get(id);
+
+  if (!activity) {
+    throw new Error("La actividad no existe.");
+  }
+
+  await db.reportActivities.delete(id);
 }
 
 export async function deleteActivitiesByReport(reportId: string): Promise<void> {

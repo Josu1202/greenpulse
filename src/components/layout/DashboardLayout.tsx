@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
+import { trackAdminEvent } from "@/db/repositories";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/utils";
+import { AdminSidebar } from "@/components/admin";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -21,6 +24,10 @@ interface DashboardLayoutProps {
  */
 const COLLAPSED_BY_DEFAULT = ["/map", "/education", "/recognition"];
 
+function isAdminRoute(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
 function shouldCollapse(pathname: string): boolean {
   return COLLAPSED_BY_DEFAULT.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -33,6 +40,9 @@ export function DashboardLayout({
   subtitle,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const shouldUseAdminSidebar = isAdminRoute(pathname) || user?.role === "admin";
+  const SidebarComponent = shouldUseAdminSidebar ? AdminSidebar : Sidebar;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // drawer móvil
   const [isCollapsed, setIsCollapsed] = useState(() =>
     shouldCollapse(pathname)
@@ -46,11 +56,27 @@ export function DashboardLayout({
     setIsCollapsed(shouldCollapse(pathname));
   }
 
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    void trackAdminEvent({
+      userId: user.id,
+      userName: user.name,
+      type: "page_view",
+      path: pathname,
+      entityType: "page",
+      description: `Visita local a ${pathname}.`,
+    }).catch(() => undefined);
+  }, [pathname, user]);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Sidebar fijo en escritorio (colapsable) */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden md:block">
-        <Sidebar
+        <SidebarComponent
           collapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed((value) => !value)}
         />
@@ -65,7 +91,7 @@ export function DashboardLayout({
             aria-hidden="true"
           />
           <aside className="absolute inset-y-0 left-0">
-            <Sidebar onNavigate={() => setIsSidebarOpen(false)} />
+            <SidebarComponent onNavigate={() => setIsSidebarOpen(false)} />
           </aside>
         </div>
       ) : null}
@@ -74,7 +100,7 @@ export function DashboardLayout({
       <div
         className={cn(
           "transition-[padding] duration-200",
-          isCollapsed ? "md:pl-16" : "md:pl-64"
+          isCollapsed ? "md:pl-16" : shouldUseAdminSidebar ? "md:pl-72" : "md:pl-64"
         )}
       >
         <Topbar

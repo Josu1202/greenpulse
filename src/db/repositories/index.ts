@@ -5,3 +5,5 @@ export * from "./settings.repository";
 export * from "./status-log.repository";
 export * from "./user.repository";
 export * from "./education.repository";
+export * from "./admin-event.repository";
+export * from "./admin.repository";

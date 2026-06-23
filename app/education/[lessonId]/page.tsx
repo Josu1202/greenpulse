@@ -13,6 +13,7 @@ import {
   ListChecks,
   PlayCircle,
   Sparkles,
+  Star,
   UserRound,
 } from "lucide-react";
 
@@ -150,15 +151,24 @@ export default function EducationLessonDetailPage() {
                   >
                     <div className="flex h-full items-end p-6 text-white">
                       <div>
-                        <Badge
-                          variant={
-                            lesson.source === "base" ? "success" : "info"
-                          }
-                        >
-                          {lesson.source === "base"
-                            ? "Lección base"
-                            : "Creada por usuario"}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge
+                            variant={
+                              lesson.source === "base" ? "success" : "info"
+                            }
+                          >
+                            {lesson.source === "base"
+                              ? "Lección base"
+                              : "Creada por usuario"}
+                          </Badge>
+
+                          {lesson.isFeatured ? (
+                            <Badge variant="warning" className="gap-1 bg-white/90 text-amber-700 shadow-sm">
+                              <Star className="h-3.5 w-3.5" />
+                              Destacada
+                            </Badge>
+                          ) : null}
+                        </div>
 
                         <h1 className="mt-4 max-w-3xl text-4xl font-bold">
                           {lesson.title}
@@ -172,13 +182,22 @@ export default function EducationLessonDetailPage() {
                   </div>
                 ) : (
                   <div className="bg-gradient-to-br from-green-600 to-emerald-500 p-8 text-white">
-                    <Badge
-                      variant={lesson.source === "base" ? "success" : "info"}
-                    >
-                      {lesson.source === "base"
-                        ? "Lección base"
-                        : "Creada por usuario"}
-                    </Badge>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge
+                        variant={lesson.source === "base" ? "success" : "info"}
+                      >
+                        {lesson.source === "base"
+                          ? "Lección base"
+                          : "Creada por usuario"}
+                      </Badge>
+
+                      {lesson.isFeatured ? (
+                        <Badge variant="warning" className="gap-1 bg-white/90 text-amber-700 shadow-sm">
+                          <Star className="h-3.5 w-3.5" />
+                          Destacada
+                        </Badge>
+                      ) : null}
+                    </div>
 
                     <div className="mt-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                       <div>

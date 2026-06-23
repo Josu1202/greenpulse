@@ -14,6 +14,10 @@ export interface Report {
   longitude: number;
   image?: string;
   images?: string[];
+  isHidden?: boolean;
+  hiddenReason?: string;
+  hiddenAt?: string;
+  hiddenBy?: string;
   createdAt: string;
   updatedAt: string;
 }
