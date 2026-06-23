@@ -13,7 +13,6 @@ export interface Report {
   latitude: number;
   longitude: number;
   image?: string;
-  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
