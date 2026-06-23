@@ -118,14 +118,14 @@ function NotificationItem({
   return (
     <article
       className={cn(
-        "group flex gap-3 border-b border-slate-100 px-3 py-3 transition last:border-b-0 hover:bg-slate-50",
-        !notification.isRead && "bg-green-50/50"
+        "group flex gap-2 border-b border-slate-100 px-3 py-3 transition last:border-b-0 hover:bg-slate-50 sm:gap-3",
+        !notification.isRead && "bg-green-50/60"
       )}
     >
       <button
         type="button"
         onClick={() => onOpen(notification)}
-        className="flex min-w-0 flex-1 gap-3 text-left"
+        className="flex min-w-0 flex-1 gap-2 text-left sm:gap-3"
       >
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-100">
           {notification.actorProfileImage ? (
@@ -157,17 +157,17 @@ function NotificationItem({
           ) : null}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold text-slate-900">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+            <p className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-900">
               {notification.title}
             </p>
-            <span className="shrink-0 text-[11px] text-slate-400">
+            <span className="shrink-0 whitespace-nowrap text-[11px] text-slate-400">
               {formatRelativeDate(notification.createdAt)}
             </span>
           </div>
 
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+          <p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-slate-600">
             {notification.message}
           </p>
         </div>
@@ -176,7 +176,7 @@ function NotificationItem({
       <button
         type="button"
         onClick={() => onDelete(notification.id)}
-        className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 group-hover:flex"
+        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 sm:mt-1 sm:h-7 sm:w-7 sm:opacity-0 sm:group-hover:opacity-100"
         aria-label="Eliminar notificación"
         title="Eliminar"
       >
@@ -212,10 +212,24 @@ export function NotificationBell() {
       }
     }
 
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    function handleExternalClose() {
+      setIsOpen(false);
+    }
+
     document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("greenpulse:close-notifications", handleExternalClose);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("greenpulse:close-notifications", handleExternalClose);
     };
   }, []);
 
@@ -232,7 +246,10 @@ export function NotificationBell() {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setIsOpen((value) => !value)}
+        onClick={() => {
+          window.dispatchEvent(new Event("greenpulse:close-sidebar"));
+          setIsOpen((value) => !value);
+        }}
         className="relative rounded-xl border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
         aria-label="Notificaciones"
       >
@@ -245,9 +262,9 @@ export function NotificationBell() {
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-            <div>
+        <div className="fixed inset-x-3 top-16 z-50 max-h-[calc(100dvh-5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl lg:absolute lg:inset-x-auto lg:right-0 lg:top-12 lg:w-[min(92vw,390px)]">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-3">
+            <div className="min-w-0">
               <h2 className="text-sm font-bold text-slate-900">
                 Notificaciones
               </h2>
@@ -258,7 +275,7 @@ export function NotificationBell() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               {unreadCount > 0 ? (
                 <button
                   type="button"
@@ -288,7 +305,7 @@ export function NotificationBell() {
               Cargando notificaciones...
             </div>
           ) : recentNotifications.length > 0 ? (
-            <div className="max-h-96 overflow-y-auto overscroll-contain">
+            <div className="max-h-[calc(100dvh-11rem)] overflow-y-auto overscroll-contain lg:max-h-96">
               {recentNotifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}
