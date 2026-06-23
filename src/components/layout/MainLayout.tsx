@@ -16,10 +16,6 @@ interface MainLayoutProps {
 const publicNavItems = [
   { label: "Inicio", href: "/" },
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Reportes", href: "/reports" },
-  { label: "Mapa", href: "/map" },
-  { label: "Educación", href: "/education" },
-  { label: "Reconocimiento", href: "/recognition" },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {

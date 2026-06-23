@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   CategoryChart,
   KpiCard,
@@ -30,7 +30,7 @@ function DashboardContent() {
   const recientes = useMemo(() => actividadReciente(reports, 5), [reports]);
 
   return (
-    <MainLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-950">Dashboard</h1>
@@ -83,7 +83,7 @@ function DashboardContent() {
           </>
         )}
       </div>
-    </MainLayout>
+    </DashboardLayout>
   );
 }
 
