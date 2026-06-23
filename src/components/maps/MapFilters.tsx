@@ -1,6 +1,6 @@
 "use client";
 
-import { Select } from "@/components/ui";
+import { Input, Select } from "@/components/ui";
 import type { Category, ReportPriority, ReportStatus } from "@/types";
 import { REPORT_PRIORITIES, REPORT_STATUSES } from "@/utils/constants";
 
@@ -9,9 +9,13 @@ interface MapFiltersProps {
   selectedCategoryId: string;
   selectedStatus: ReportStatus | "all";
   selectedPriority: ReportPriority | "all";
+  searchText: string;
+  hideResolved: boolean;
   onCategoryChange: (value: string) => void;
   onStatusChange: (value: ReportStatus | "all") => void;
   onPriorityChange: (value: ReportPriority | "all") => void;
+  onSearchTextChange: (value: string) => void;
+  onHideResolvedChange: (value: boolean) => void;
   totalVisibles: number;
 }
 
@@ -20,9 +24,13 @@ export function MapFilters({
   selectedCategoryId,
   selectedStatus,
   selectedPriority,
+  searchText,
+  hideResolved,
   onCategoryChange,
   onStatusChange,
   onPriorityChange,
+  onSearchTextChange,
+  onHideResolvedChange,
   totalVisibles,
 }: MapFiltersProps) {
   return (
@@ -33,6 +41,13 @@ export function MapFilters({
           Filtra los reportes que se muestran en el mapa.
         </p>
       </div>
+
+      <Input
+        label="Buscar"
+        placeholder="Título o descripción..."
+        value={searchText}
+        onChange={(e) => onSearchTextChange(e.target.value)}
+      />
 
       <Select
         label="Categoría"
@@ -74,6 +89,16 @@ export function MapFilters({
           </option>
         ))}
       </Select>
+
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={hideResolved}
+          onChange={(e) => onHideResolvedChange(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+        />
+        Ocultar reportes resueltos
+      </label>
 
       <p className="text-xs text-slate-500">
         Mostrando {totalVisibles} reporte(s) en el mapa.

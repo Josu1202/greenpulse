@@ -54,18 +54,35 @@ function ReportCard({
       <div className="p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex gap-3">
-            {report.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={report.image}
-                alt={report.title}
-                className="h-20 w-20 rounded-xl border border-slate-200 object-cover"
-              />
-            ) : (
-              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-green-50 text-sm font-semibold text-green-700">
-                GP
-              </span>
-            )}
+            {(() => {
+              const gallery = report.images?.length
+                ? report.images
+                : report.image
+                  ? [report.image]
+                  : [];
+              const cover = gallery[0];
+              const extra = gallery.length - 1;
+
+              return cover ? (
+                <div className="relative h-20 w-20 shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cover}
+                    alt={report.title}
+                    className="h-20 w-20 rounded-xl border border-slate-200 object-cover"
+                  />
+                  {extra > 0 ? (
+                    <span className="absolute bottom-1 right-1 rounded bg-slate-900/75 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      +{extra}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-green-50 text-sm font-semibold text-green-700">
+                  GP
+                </span>
+              );
+            })()}
 
             <div className="min-w-0 space-y-2">
               <div>
