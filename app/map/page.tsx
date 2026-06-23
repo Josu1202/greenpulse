@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import { Card } from "@/components/ui";
 import {
   MapControls,
@@ -61,7 +61,7 @@ function MapContent() {
   }, [filteredReports, selectedPriority, searchText, hideResolved]);
 
   return (
-    <MainLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-950">Mapa ambiental</h1>
@@ -130,7 +130,7 @@ function MapContent() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </DashboardLayout>
   );
 }
 

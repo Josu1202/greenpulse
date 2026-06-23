@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Award, BookOpen, PlusCircle } from "lucide-react";
 
 import { EducationLessonCard } from "@/components/education";
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   Card,
   CardContent,
@@ -28,7 +28,7 @@ export default function EducationPage() {
 
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <div className="space-y-8">
           <section className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
@@ -169,7 +169,7 @@ export default function EducationPage() {
             </>
           )}
         </div>
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

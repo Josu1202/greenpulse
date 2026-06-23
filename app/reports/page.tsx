@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import { Button, ConfirmDialog } from "@/components/ui";
 import { ReportFilters, ReportTable, ReportToolbar } from "@/components/reports";
 import { useCategories, useReports } from "@/hooks";
@@ -132,7 +132,7 @@ export default function ReportsPage() {
 
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -254,7 +254,7 @@ export default function ReportsPage() {
           onConfirm={handleConfirmDelete}
           onCancel={() => setPendingDeleteId(null)}
         />
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

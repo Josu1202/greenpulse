@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   CategoryChart,
   DashboardFilters,
@@ -133,7 +133,7 @@ function DashboardContent() {
   );
 
   return (
-    <MainLayout>
+    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-950">Dashboard</h1>
@@ -205,7 +205,7 @@ function DashboardContent() {
           </>
         )}
       </div>
-    </MainLayout>
+    </DashboardLayout>
   );
 }
 

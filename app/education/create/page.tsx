@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ImagePlus, PlusCircle, Trash2 } from "lucide-react";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   Button,
   Card,
@@ -244,7 +244,7 @@ export default function CreateEducationLessonPage() {
 
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <div className="space-y-6">
           <Link
             href="/education"
@@ -510,7 +510,7 @@ export default function CreateEducationLessonPage() {
             </div>
           </form>
         </div>
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }
