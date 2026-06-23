@@ -78,7 +78,14 @@ export function Sidebar({
             : "items-center gap-2 px-4"
         )}
       >
-        <Logo size="md" tone="light" withText={!collapsed} />
+        <Link
+        href="/"
+        onClick={onNavigate}
+        className="rounded-2xl focus:outline-none focus:ring-2 focus:ring-white/40"
+        aria-label="Ir al inicio"
+      >
+        <Logo tone="light" withText={!collapsed} subtitle={!collapsed ? "Monitoreo ambiental" : undefined} />
+      </Link>
 
         {onToggleCollapse ? (
           <button
