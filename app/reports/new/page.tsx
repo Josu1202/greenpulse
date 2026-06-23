@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
 
 import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
@@ -30,7 +29,6 @@ function ReportFormContent() {
   const [recognitionDraft, setRecognitionDraft] =
     useState<RecognitionReportDraft | null>(null);
   const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const {
     reports,
@@ -78,8 +76,7 @@ function ReportFormContent() {
         priority: data.priority,
         latitude: data.latitude,
         longitude: data.longitude,
-        image: data.images?.[0] ?? data.image,
-        images: data.images,
+        image: data.image,
       });
     } else {
       await createNewReport({
@@ -90,8 +87,7 @@ function ReportFormContent() {
         status: data.status ?? "pending",
         latitude: data.latitude,
         longitude: data.longitude,
-        image: data.images?.[0] ?? data.image,
-        images: data.images,
+        image: data.image,
       });
 
       if (recognitionDraft) {
@@ -99,21 +95,22 @@ function ReportFormContent() {
       }
     }
 
-    // Confirmación de éxito antes de volver al listado.
-    setSuccess(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 900));
     router.push("/reports");
   };
 
   if (loadingReports || loadingCategories) {
     return (
-      <p className="py-8 text-center text-slate-500">Cargando formulario...</p>
+      <p className="py-8 text-center text-slate-500">
+        Cargando formulario...
+      </p>
     );
   }
 
   if (!hasLoadedDraft) {
     return (
-      <p className="py-8 text-center text-slate-500">Preparando formulario...</p>
+      <p className="py-8 text-center text-slate-500">
+        Preparando formulario...
+      </p>
     );
   }
 
@@ -168,20 +165,11 @@ function ReportFormContent() {
         </p>
       </div>
 
-      {success ? (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-          <CheckCircle2 className="h-5 w-5" />
-          {isEditing ? "Cambios guardados" : "Reporte creado correctamente"}. Te
-          llevamos al listado...
-        </div>
-      ) : null}
-
       <Card>
         <ReportForm
           categories={categories}
           initialReport={existingReport}
           initialData={!isEditing ? recognitionDraft ?? undefined : undefined}
-          existingReports={reports}
           submitLabel={isEditing ? "Guardar cambios" : "Crear reporte"}
           onSubmit={handleSubmit}
           onCancel={() => router.push("/reports")}

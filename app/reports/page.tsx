@@ -4,20 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { DashboardLayout, ProtectedRoute } from "@/components/layout";
-import { Button, ConfirmDialog } from "@/components/ui";
-import { ReportFilters, ReportTable, ReportToolbar } from "@/components/reports";
+import { Button } from "@/components/ui";
+import { ReportFilters, ReportTable } from "@/components/reports";
 import { useCategories, useReports } from "@/hooks";
-import {
-  filterReportsByPriority,
-  searchReports,
-  sortReports,
-  type ReportSortOption,
-} from "@/features/reports/reportPresentation";
-import {
-  buildReportsFilename,
-  downloadCsv,
-  reportsToCsv,
-} from "@/features/reports/reportExport";
+import { filterReportsByPriority } from "@/features/reports/reportPresentation";
 import type { ReportPriority } from "@/types";
 
 const REPORTS_PER_PAGE = 5;
@@ -40,33 +30,15 @@ export default function ReportsPage() {
 
   const { categories } = useCategories();
 
-  const [selectedPriority, setSelectedPriority] = useState
+  const [selectedPriority, setSelectedPriority] = useState<
     ReportPriority | "all"
   >("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState<ReportSortOption>("recent");
-  const [onlyMine, setOnlyMine] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const visibleReports = useMemo(() => {
-    let list = filterReportsByPriority(filteredReports, selectedPriority);
-    list = searchReports(list, searchQuery);
-
-    if (onlyMine && currentUser) {
-      list = list.filter((report) => report.userId === currentUser.id);
-    }
-
-    return sortReports(list, sortOption);
-  }, [
-    filteredReports,
-    selectedPriority,
-    searchQuery,
-    onlyMine,
-    currentUser,
-    sortOption,
-  ]);
+  const visibleReports = useMemo(
+    () => filterReportsByPriority(filteredReports, selectedPriority),
+    [filteredReports, selectedPriority]
+  );
 
   const shouldPaginate = visibleReports.length > PAGINATION_THRESHOLD;
   const totalPages = shouldPaginate
@@ -84,14 +56,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [
-    selectedStatus,
-    selectedCategoryId,
-    selectedPriority,
-    searchQuery,
-    onlyMine,
-    sortOption,
-  ]);
+  }, [selectedStatus, selectedCategoryId, selectedPriority]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -99,23 +64,16 @@ export default function ReportsPage() {
     }
   }, [currentPage, totalPages]);
 
-  const handleExport = () => {
-    const csv = reportsToCsv(visibleReports, categories);
-    downloadCsv(buildReportsFilename(), csv);
-  };
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "¿Eliminar este reporte? Solo el dueño puede hacerlo. También se eliminará su historial."
+    );
 
-  const handleConfirmDelete = async () => {
-    if (!pendingDeleteId) {
+    if (!confirmed) {
       return;
     }
 
-    try {
-      setIsDeleting(true);
-      await removeReport(pendingDeleteId);
-    } finally {
-      setIsDeleting(false);
-      setPendingDeleteId(null);
-    }
+    await removeReport(id);
   };
 
   const handleReopen = async (id: string) => {
@@ -158,18 +116,6 @@ export default function ReportsPage() {
             onPriorityChange={setSelectedPriority}
           />
 
-          <ReportToolbar
-            searchQuery={searchQuery}
-            sortOption={sortOption}
-            onlyMine={onlyMine}
-            canFilterMine={Boolean(currentUser)}
-            canExport={visibleReports.length > 0}
-            onSearchChange={setSearchQuery}
-            onSortChange={setSortOption}
-            onOnlyMineChange={setOnlyMine}
-            onExport={handleExport}
-          />
-
           {error ? (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
@@ -199,7 +145,7 @@ export default function ReportsPage() {
                 reports={paginatedReports}
                 categories={categories}
                 currentUserId={currentUser?.id}
-                onDelete={(id) => setPendingDeleteId(id)}
+                onDelete={handleDelete}
                 onReopen={handleReopen}
                 onRefreshReports={loadReports}
               />
@@ -243,17 +189,6 @@ export default function ReportsPage() {
             </>
           )}
         </div>
-
-        <ConfirmDialog
-          open={pendingDeleteId !== null}
-          title="¿Eliminar este reporte?"
-          description="Solo el dueño puede hacerlo. También se eliminará todo su historial de avances y comentarios. Esta acción no se puede deshacer."
-          confirmLabel={isDeleting ? "Eliminando..." : "Eliminar"}
-          cancelLabel="Cancelar"
-          variant="danger"
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setPendingDeleteId(null)}
-        />
       </DashboardLayout>
     </ProtectedRoute>
   );
