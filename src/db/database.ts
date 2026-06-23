@@ -2,6 +2,7 @@ import Dexie, { type Table } from "dexie";
 
 import type {
   AdminEvent,
+  AppNotification,
   AppSettings,
   Category,
   EducationLesson,
@@ -22,6 +23,7 @@ export class GreenPulseDatabase extends Dexie {
   educationLessons!: Table<EducationLesson, string>;
   educationProgress!: Table<EducationLessonProgress, string>;
   adminEvents!: Table<AdminEvent, string>;
+  notifications!: Table<AppNotification, string>;
 
   constructor() {
     super("GreenPulseDB");
@@ -68,6 +70,21 @@ export class GreenPulseDatabase extends Dexie {
       educationLessons: "id, source, status, isFeatured, createdByUserId, createdAt",
       educationProgress: "id, userId, lessonId, [userId+lessonId], completedAt",
       adminEvents: "id, userId, type, path, entityId, entityType, createdAt",
+    });
+
+    this.version(5).stores({
+      users: "id, email, role, isActive, createdAt",
+      reports:
+        "id, userId, categoryId, status, priority, isHidden, createdAt, updatedAt",
+      categories: "id, name",
+      statusLogs: "id, reportId, changedAt",
+      settings: "id, seedLoaded",
+      reportActivities: "id, reportId, userId, type, isHidden, createdAt",
+      educationLessons: "id, source, status, isFeatured, createdByUserId, createdAt",
+      educationProgress: "id, userId, lessonId, [userId+lessonId], completedAt",
+      adminEvents: "id, userId, type, path, entityId, entityType, createdAt",
+      notifications:
+        "id, recipientUserId, type, isRead, createdAt, entityType, entityId",
     });
   }
 }

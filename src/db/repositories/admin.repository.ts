@@ -35,6 +35,7 @@ import {
 } from "./education.repository";
 import { setUserActiveStatus } from "./user.repository";
 import { trackAdminEvent } from "./admin-event.repository";
+import { createNotification } from "./notification.repository";
 
 export interface AdminReportsData {
   reports: Report[];
@@ -384,6 +385,7 @@ export async function updateReportAsAdmin(
   input: AdminUpdateReportInput,
   actor: ReportActorInput
 ): Promise<Report> {
+  const previousReport = await db.reports.get(id);
   const report = await adminUpdateReport(id, input, actor);
 
   await trackAdminEvent({
@@ -394,6 +396,36 @@ export async function updateReportAsAdmin(
     entityType: "report",
     description: "Reporte actualizado por administración.",
   });
+
+  if (previousReport && input.status && previousReport.status !== input.status) {
+    if (input.status === "resolved") {
+      await createNotification({
+        recipientUserId: previousReport.userId,
+        actorUserId: actor.userId,
+        actorName: actor.userName,
+        actorProfileImage: actor.userProfileImage,
+        type: "report_closed_by_admin",
+        title: "Reporte cerrado por administración",
+        message: `Administración cerró tu reporte: ${previousReport.title}.`,
+        entityType: "report",
+        entityId: id,
+        actionUrl: `/reports?focus=${id}`,
+      });
+    } else if (previousReport.status === "resolved") {
+      await createNotification({
+        recipientUserId: previousReport.userId,
+        actorUserId: actor.userId,
+        actorName: actor.userName,
+        actorProfileImage: actor.userProfileImage,
+        type: "report_reopened_by_admin",
+        title: "Reporte reabierto por administración",
+        message: `Administración reabrió tu reporte: ${previousReport.title}.`,
+        entityType: "report",
+        entityId: id,
+        actionUrl: `/reports?focus=${id}`,
+      });
+    }
+  }
 
   return report;
 }
@@ -414,6 +446,19 @@ export async function hideReportAsAdmin(
     description: reason || "Reporte ocultado por administración.",
   });
 
+  await createNotification({
+    recipientUserId: report.userId,
+    actorUserId: actor.userId,
+    actorName: actor.userName,
+    actorProfileImage: actor.userProfileImage,
+    type: "report_hidden",
+    title: "Reporte ocultado",
+    message: `Administración ocultó tu reporte: ${report.title}.`,
+    entityType: "report",
+    entityId: id,
+    actionUrl: "/reports",
+  });
+
   return report;
 }
 
@@ -432,6 +477,19 @@ export async function restoreReportAsAdmin(
     description: "Reporte restaurado por administración.",
   });
 
+  await createNotification({
+    recipientUserId: report.userId,
+    actorUserId: actor.userId,
+    actorName: actor.userName,
+    actorProfileImage: actor.userProfileImage,
+    type: "report_restored",
+    title: "Reporte restaurado",
+    message: `Administración restauró tu reporte: ${report.title}.`,
+    entityType: "report",
+    entityId: id,
+    actionUrl: `/reports?focus=${id}`,
+  });
+
   return report;
 }
 
@@ -439,6 +497,8 @@ export async function deleteReportAsAdmin(
   id: string,
   actor: ReportActorInput
 ): Promise<void> {
+  const previousReport = await db.reports.get(id);
+
   await adminDeleteReport(id);
 
   await trackAdminEvent({
@@ -449,6 +509,21 @@ export async function deleteReportAsAdmin(
     entityType: "report",
     description: "Reporte eliminado por administración.",
   });
+
+  if (previousReport) {
+    await createNotification({
+      recipientUserId: previousReport.userId,
+      actorUserId: actor.userId,
+      actorName: actor.userName,
+      actorProfileImage: actor.userProfileImage,
+      type: "report_deleted",
+      title: "Reporte eliminado",
+      message: `Administración eliminó tu reporte: ${previousReport.title}.`,
+      entityType: "report",
+      entityId: id,
+      actionUrl: "/reports",
+    });
+  }
 }
 
 export async function hideActivityAsAdmin(
@@ -543,6 +618,7 @@ export async function updateLessonAsAdmin(
   input: AdminUpdateEducationLessonInput,
   actor: ReportActorInput
 ): Promise<EducationLesson> {
+  const previousLesson = await db.educationLessons.get(id);
   const lesson = await adminUpdateEducationLesson(id, input);
 
   await trackAdminEvent({
@@ -559,6 +635,64 @@ export async function updateLessonAsAdmin(
     description: "Lección actualizada por administración.",
   });
 
+  const shouldNotifyAuthor =
+    lesson.source === "user" &&
+    Boolean(lesson.createdByUserId) &&
+    lesson.createdByUserId !== actor.userId;
+
+  if (shouldNotifyAuthor && previousLesson?.status !== lesson.status) {
+    if (lesson.status === "published") {
+      await createNotification({
+        recipientUserId: lesson.createdByUserId as string,
+        actorUserId: actor.userId,
+        actorName: actor.userName,
+        actorProfileImage: actor.userProfileImage,
+        type: "lesson_published",
+        title: "Lección publicada",
+        message: `Administración aprobó y publicó tu lección: ${lesson.title}.`,
+        entityType: "lesson",
+        entityId: id,
+        actionUrl: `/education/${id}`,
+      });
+    }
+
+    if (lesson.status === "hidden") {
+      await createNotification({
+        recipientUserId: lesson.createdByUserId as string,
+        actorUserId: actor.userId,
+        actorName: actor.userName,
+        actorProfileImage: actor.userProfileImage,
+        type: "lesson_hidden",
+        title: "Lección oculta",
+        message: `Administración ocultó tu lección: ${lesson.title}.`,
+        entityType: "lesson",
+        entityId: id,
+        actionUrl: "/education",
+      });
+    }
+  }
+
+  if (
+    shouldNotifyAuthor &&
+    previousLesson?.isFeatured !== lesson.isFeatured &&
+    lesson.isFeatured !== undefined
+  ) {
+    await createNotification({
+      recipientUserId: lesson.createdByUserId as string,
+      actorUserId: actor.userId,
+      actorName: actor.userName,
+      actorProfileImage: actor.userProfileImage,
+      type: lesson.isFeatured ? "lesson_featured" : "lesson_unfeatured",
+      title: lesson.isFeatured ? "Lección destacada" : "Lección dejó de ser destacada",
+      message: lesson.isFeatured
+        ? `Administración marcó como destacada tu lección: ${lesson.title}.`
+        : `Administración quitó la marca destacada de tu lección: ${lesson.title}.`,
+      entityType: "lesson",
+      entityId: id,
+      actionUrl: lesson.status === "published" ? `/education/${id}` : "/education",
+    });
+  }
+
   return lesson;
 }
 
@@ -566,6 +700,8 @@ export async function deleteLessonAsAdmin(
   id: string,
   actor: ReportActorInput
 ): Promise<void> {
+  const previousLesson = await db.educationLessons.get(id);
+
   await adminDeleteEducationLesson(id);
 
   await trackAdminEvent({
@@ -576,6 +712,25 @@ export async function deleteLessonAsAdmin(
     entityType: "lesson",
     description: "Lección eliminada por administración.",
   });
+
+  if (
+    previousLesson?.source === "user" &&
+    previousLesson.createdByUserId &&
+    previousLesson.createdByUserId !== actor.userId
+  ) {
+    await createNotification({
+      recipientUserId: previousLesson.createdByUserId,
+      actorUserId: actor.userId,
+      actorName: actor.userName,
+      actorProfileImage: actor.userProfileImage,
+      type: "lesson_deleted",
+      title: "Lección eliminada",
+      message: `Administración eliminó tu lección: ${previousLesson.title}.`,
+      entityType: "lesson",
+      entityId: id,
+      actionUrl: "/education",
+    });
+  }
 }
 
 export async function getAdminUsersData(): Promise<AdminUsersData> {

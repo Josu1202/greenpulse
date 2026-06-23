@@ -7,3 +7,5 @@ export * from "./user.repository";
 export * from "./education.repository";
 export * from "./admin-event.repository";
 export * from "./admin.repository";
+
+export * from "./notification.repository";
