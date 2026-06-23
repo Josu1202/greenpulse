@@ -12,7 +12,6 @@ const IMPACT_LABEL = (factor: number): { label: string; className: string } => {
   return { label: "Impacto bajo", className: "text-slate-500" };
 };
 
-
 interface CategoryChipsProps {
   categories: Category[];
   selectedCategoryId: string;
