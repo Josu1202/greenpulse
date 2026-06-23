@@ -139,7 +139,7 @@ export function LessonQuiz({ lesson, onComplete }: LessonQuizProps) {
                     <label
                       key={option.id}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm transition",
+                        "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm text-slate-950 transition",
                         isSelected
                           ? "border-green-500 bg-green-50"
                           : "border-slate-200 hover:bg-slate-50",
@@ -167,7 +167,7 @@ export function LessonQuiz({ lesson, onComplete }: LessonQuizProps) {
                         className="h-4 w-4 accent-green-600"
                       />
 
-                      <span>{option.text}</span>
+                      <span className="text-slate-950">{option.text}</span>
                     </label>
                   );
                 })}

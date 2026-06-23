@@ -6,6 +6,7 @@ import type {
   ReportStatus,
 } from "@/types";
 import { createReportActivity } from "./report-activity.repository";
+import { createNotification, createNotificationForAdmins } from "./notification.repository";
 
 export interface ReportActorInput {
   userId: string;
@@ -220,6 +221,24 @@ export async function createReport(input: CreateReportInput): Promise<Report> {
     });
   });
 
+  await createNotificationForAdmins({
+    actorUserId: input.userId,
+    actorName: input.userName,
+    actorProfileImage: input.userProfileImage,
+    type: report.priority === "high" ? "report_high_priority" : "report_created",
+    title:
+      report.priority === "high"
+        ? "Reporte de alta prioridad"
+        : "Nuevo reporte ambiental",
+    message:
+      report.priority === "high"
+        ? `${input.userName} creó un reporte de alta prioridad: ${report.title}.`
+        : `${input.userName} creó el reporte: ${report.title}.`,
+    entityType: "report",
+    entityId: report.id,
+    actionUrl: "/admin/reports",
+  });
+
   return report;
 }
 
@@ -357,7 +376,7 @@ export async function addReportComment(
     throw new Error("El comentario es obligatorio.");
   }
 
-  return createReportActivity({
+  const activity = await createReportActivity({
     reportId: input.reportId,
     userId: input.userId,
     userName: input.userName,
@@ -366,6 +385,21 @@ export async function addReportComment(
     comment,
     image: input.image,
   });
+
+  await createNotification({
+    recipientUserId: existingReport.userId,
+    actorUserId: input.userId,
+    actorName: input.userName,
+    actorProfileImage: input.userProfileImage,
+    type: "report_comment",
+    title: "Nuevo comentario en tu reporte",
+    message: `${input.userName} comentó tu reporte: ${existingReport.title}.`,
+    entityType: "report",
+    entityId: input.reportId,
+    actionUrl: `/reports?focus=${input.reportId}`,
+  });
+
+  return activity;
 }
 
 export async function addReportProgressUpdate(
@@ -429,6 +463,19 @@ export async function addReportProgressUpdate(
   if (!activity) {
     throw new Error("No se pudo registrar el avance.");
   }
+
+  await createNotification({
+    recipientUserId: existingReport.userId,
+    actorUserId: input.userId,
+    actorName: input.userName,
+    actorProfileImage: input.userProfileImage,
+    type: "report_progress",
+    title: "Nuevo avance en tu reporte",
+    message: `${input.userName} agregó un avance a tu reporte: ${existingReport.title}.`,
+    entityType: "report",
+    entityId: input.reportId,
+    actionUrl: `/reports?focus=${input.reportId}`,
+  });
 
   return activity;
 }
@@ -495,6 +542,20 @@ export async function updateReportStatus(
       });
     }
   );
+
+  if (isReopen) {
+    await createNotificationForAdmins({
+      actorUserId: actor.userId,
+      actorName: actor.userName,
+      actorProfileImage: actor.userProfileImage,
+      type: "report_reopened",
+      title: "Reporte reabierto",
+      message: `${actor.userName} reabrió el reporte: ${existingReport.title}.`,
+      entityType: "report",
+      entityId: id,
+      actionUrl: "/admin/reports",
+    });
+  }
 
   return getUpdatedReport(id);
 }

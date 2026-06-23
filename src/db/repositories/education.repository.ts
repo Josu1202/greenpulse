@@ -4,7 +4,8 @@ import type {
   EducationLessonProgress,
   EducationLessonStatus,
 } from "@/types";
-import { BASE_EDUCATION_LESSONS } from "@/utils";
+import { BASE_EDUCATION_LESSONS, getEarnedEducationBadges } from "@/utils";
+import { createNotification, createNotificationForAdmins } from "./notification.repository";
 
 export interface CreateEducationLessonInput {
   title: string;
@@ -155,6 +156,30 @@ export async function createEducationLesson(
 
   await db.educationLessons.add(lesson);
 
+  const creator = await db.users.get(input.createdByUserId);
+
+  await createNotification({
+    recipientUserId: input.createdByUserId,
+    type: "lesson_submitted",
+    title: "Lección enviada a revisión",
+    message: `Tu lección ${lesson.title} fue enviada a revisión administrativa.`,
+    entityType: "lesson",
+    entityId: lesson.id,
+    actionUrl: "/education",
+  });
+
+  await createNotificationForAdmins({
+    actorUserId: input.createdByUserId,
+    actorName: input.createdByUserName,
+    actorProfileImage: creator?.profileImage,
+    type: "lesson_submitted",
+    title: "Nueva lección pendiente",
+    message: `${input.createdByUserName} creó una lección que requiere revisión: ${lesson.title}.`,
+    entityType: "lesson",
+    entityId: lesson.id,
+    actionUrl: "/admin/lessons",
+  });
+
   return lesson;
 }
 
@@ -289,6 +314,11 @@ export async function completeEducationLesson(
     .equals([input.userId, input.lessonId])
     .first();
 
+  const previousCompletedCount = await db.educationProgress
+    .where("userId")
+    .equals(input.userId)
+    .count();
+
   const progress: EducationLessonProgress = {
     id: existingProgress?.id ?? crypto.randomUUID(),
     userId: input.userId,
@@ -299,6 +329,28 @@ export async function completeEducationLesson(
   };
 
   await db.educationProgress.put(progress);
+
+  if (!existingProgress) {
+    const previousBadgeIds = new Set(
+      getEarnedEducationBadges(previousCompletedCount).map((badge) => badge.id)
+    );
+    const currentBadges = getEarnedEducationBadges(previousCompletedCount + 1);
+    const newBadges = currentBadges.filter(
+      (badge) => !previousBadgeIds.has(badge.id)
+    );
+
+    for (const badge of newBadges) {
+      await createNotification({
+        recipientUserId: input.userId,
+        type: "badge_earned",
+        title: "Nueva insignia desbloqueada",
+        message: `Ganaste la insignia ${badge.name}: ${badge.description}`,
+        entityType: "badge",
+        entityId: badge.id,
+        actionUrl: "/education",
+      });
+    }
+  }
 
   return progress;
 }

@@ -8,3 +8,5 @@ export * from "./useAdminStats";
 export * from "./useAdminReports";
 export * from "./useAdminLessons";
 export * from "./useAdminUsers";
+
+export * from "./useNotifications";

@@ -43,7 +43,7 @@ export function DashboardLayout({
   const { user } = useAuth();
   const shouldUseAdminSidebar = isAdminRoute(pathname) || user?.role === "admin";
   const SidebarComponent = shouldUseAdminSidebar ? AdminSidebar : Sidebar;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // drawer móvil
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // drawer móvil/tablet
   const [isCollapsed, setIsCollapsed] = useState(() =>
     shouldCollapse(pathname)
   );
@@ -56,6 +56,17 @@ export function DashboardLayout({
     setIsCollapsed(shouldCollapse(pathname));
   }
 
+  useEffect(() => {
+    function closeSidebar() {
+      setIsSidebarOpen(false);
+    }
+
+    window.addEventListener("greenpulse:close-sidebar", closeSidebar);
+
+    return () => {
+      window.removeEventListener("greenpulse:close-sidebar", closeSidebar);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -74,17 +85,17 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar fijo en escritorio (colapsable) */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden md:block">
+      {/* Sidebar fijo solo en escritorio amplio. En tablet se usa drawer para evitar choque con notificaciones. */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden lg:block">
         <SidebarComponent
           collapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed((value) => !value)}
         />
       </aside>
 
-      {/* Drawer en móvil (siempre desplegado) */}
+      {/* Drawer en móvil/tablet (siempre desplegado). */}
       {isSidebarOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div
             className="absolute inset-0 bg-slate-900/50"
             onClick={() => setIsSidebarOpen(false)}
@@ -96,11 +107,15 @@ export function DashboardLayout({
         </div>
       ) : null}
 
-      {/* Contenido principal; el padding se ajusta al ancho del sidebar */}
+      {/* Contenido principal; el padding se ajusta al ancho del sidebar solo en escritorio amplio. */}
       <div
         className={cn(
           "transition-[padding] duration-200",
-          isCollapsed ? "md:pl-16" : shouldUseAdminSidebar ? "md:pl-72" : "md:pl-64"
+          isCollapsed
+            ? "lg:pl-16"
+            : shouldUseAdminSidebar
+              ? "lg:pl-72"
+              : "lg:pl-64"
         )}
       >
         <Topbar
