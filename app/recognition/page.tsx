@@ -3,12 +3,12 @@
 import { Camera, Sparkles } from "lucide-react";
 
 import { CameraRecognition } from "@/components/recognition";
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 
 export default function RecognitionPage() {
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <div className="space-y-8">
           <section>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
@@ -35,7 +35,7 @@ export default function RecognitionPage() {
 
           <CameraRecognition />
         </div>
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }

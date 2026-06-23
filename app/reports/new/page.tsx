@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
-import { MainLayout, ProtectedRoute } from "@/components/layout";
+import { DashboardLayout, ProtectedRoute } from "@/components/layout";
 import {
   Button,
   Card,
@@ -194,7 +194,7 @@ function ReportFormContent() {
 export default function ReportFormPage() {
   return (
     <ProtectedRoute>
-      <MainLayout>
+      <DashboardLayout>
         <Suspense
           fallback={
             <p className="py-8 text-center text-slate-500">
@@ -204,7 +204,7 @@ export default function ReportFormPage() {
         >
           <ReportFormContent />
         </Suspense>
-      </MainLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }
